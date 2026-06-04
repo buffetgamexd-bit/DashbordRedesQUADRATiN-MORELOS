@@ -445,3 +445,693 @@ body {
   line-height: 1.4;
   color: var(--text-main);
 }
+
+/* Asana Friendly Theme Styles */
+
+/* Base Design System Tokens */
+:root {
+  --asana-bg-main: #f9f9fb;
+  --asana-bg-sidebar: #f5f6f8;
+  --asana-bg-card: #ffffff;
+  --asana-border: #e8ecef;
+  --asana-text-title: #151b26;
+  --asana-text-main: #4a5260;
+  --asana-text-muted: #6f7785;
+  --asana-primary: #2a6bf2;
+  --asana-success: #10b981;
+  --asana-amber: #f59e0b;
+  --asana-danger: #ef4444;
+}
+
+/* Layout Framework */
+.asana-layout-wrapper {
+  display: flex;
+  min-height: 620px;
+  background-color: var(--asana-bg-main);
+  border-radius: 0.75rem;
+  border: 1px solid var(--asana-border);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--asana-text-main);
+}
+
+/* Sidebar Styling */
+.asana-sidebar {
+  width: 240px;
+  background-color: var(--asana-bg-sidebar);
+  border-right: 1px solid var(--asana-border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  padding: 1.25rem 0.75rem;
+}
+
+.asana-sidebar-workspace {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.asana-sidebar-avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.375rem;
+  background-color: #ff6600;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.asana-sidebar-ws-info {
+  min-width: 0;
+}
+
+.asana-sidebar-ws-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--asana-text-title);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.asana-sidebar-ws-role {
+  font-size: 0.7rem;
+  color: var(--asana-text-muted);
+}
+
+.asana-sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.asana-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--asana-text-main);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.asana-sidebar-link:hover, .asana-sidebar-link.active {
+  background-color: rgba(21, 27, 38, 0.04);
+  color: var(--asana-text-title);
+}
+
+.asana-sidebar-link.active {
+  font-weight: 600;
+  background-color: rgba(42, 107, 242, 0.08);
+  color: var(--asana-primary);
+}
+
+.asana-sidebar-section-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--asana-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.5rem 0.75rem;
+  margin-top: 1rem;
+}
+
+.asana-sidebar-projects {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.asana-project-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--asana-text-main);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.asana-project-item:hover, .asana-project-item.active {
+  background-color: rgba(21, 27, 38, 0.04);
+  color: var(--asana-text-title);
+}
+
+.asana-project-item.active {
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  font-weight: 600;
+}
+
+.asana-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* Main Workspace Area */
+.asana-workspace-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--asana-bg-card);
+  min-width: 0;
+}
+
+/* Project Header & View Tabs */
+.asana-proj-header {
+  padding: 1.25rem 2rem 0;
+  border-bottom: 1px solid var(--asana-border);
+}
+
+.asana-proj-meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: justify;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.asana-proj-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.asana-proj-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+}
+
+.asana-proj-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--asana-text-title);
+}
+
+.asana-proj-subtitle {
+  font-size: 0.8rem;
+  color: var(--asana-text-muted);
+  margin-top: 0.15rem;
+}
+
+.asana-proj-nav-tabs {
+  display: flex;
+  gap: 1.25rem;
+  margin-top: 0.75rem;
+}
+
+.asana-view-tab {
+  padding: 0.5rem 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--asana-text-muted);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+.asana-view-tab:hover {
+  color: var(--asana-text-title);
+}
+
+.asana-view-tab.active {
+  color: var(--asana-text-title);
+  font-weight: 600;
+  border-bottom-color: var(--asana-primary);
+}
+
+/* Alert Banner */
+.asana-retraso-banner {
+  margin: 1.25rem 2rem 0;
+  padding: 0.75rem 1.25rem;
+  background-color: #fff0f0;
+  border: 1px solid #ffd5d5;
+  border-radius: 0.5rem;
+  color: #c53030;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.8rem;
+  box-shadow: 0 1px 2px rgba(239, 68, 68, 0.05);
+  animation: slideInDown 0.3s ease-out;
+}
+
+.asana-retraso-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.asana-banner-close {
+  background: none;
+  border: none;
+  color: #c53030;
+  font-size: 1rem;
+  cursor: pointer;
+  opacity: 0.7;
+  padding: 0.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.asana-banner-close:hover {
+  opacity: 1;
+}
+
+/* Body Workspace Content */
+.asana-workspace-body {
+  flex: 1;
+  padding: 1.5rem 2rem;
+  background-color: var(--asana-bg-main);
+  min-height: 400px;
+  overflow-y: auto;
+}
+
+/* List View Styling */
+.asana-list-container {
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  border: 1px solid var(--asana-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  overflow: hidden;
+}
+
+.asana-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.asana-th {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--asana-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--asana-border);
+  background-color: #fafbfc;
+}
+
+.asana-th:first-child {
+  padding-left: 1rem;
+}
+
+.asana-tr {
+  border-bottom: 1px solid var(--asana-border);
+  transition: background-color 0.15s;
+}
+
+.asana-tr:hover {
+  background-color: #fafbfc;
+}
+
+.asana-tr:hover .asana-btn-delete-row {
+  opacity: 1;
+}
+
+.asana-td {
+  padding: 0.65rem 0.75rem;
+  vertical-align: middle;
+  font-size: 0.85rem;
+}
+
+.asana-td:first-child {
+  padding-left: 1rem;
+}
+
+/* Circular Checkbox styling */
+.asana-circle-checkbox {
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  border: 1.5px solid #a1a8b5;
+  background-color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.asana-circle-checkbox:hover {
+  border-color: var(--asana-success);
+  background-color: rgba(16, 185, 129, 0.05);
+}
+
+.asana-circle-checkbox:hover::after {
+  content: "✓";
+  color: var(--asana-success);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.asana-circle-checkbox.completed {
+  border-color: var(--asana-success);
+  background-color: var(--asana-success);
+}
+
+.asana-circle-checkbox.completed::after {
+  content: "✓";
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* Title text */
+.asana-task-title-cell {
+  font-weight: 500;
+  color: var(--asana-text-title);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
+}
+
+.asana-task-title-cell.completed {
+  color: var(--asana-text-muted);
+  text-decoration: line-through;
+}
+
+/* Dropdown interactive pills */
+.asana-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.15s, filter 0.15s;
+}
+
+.asana-badge-pill:hover {
+  filter: brightness(0.95);
+  transform: translateY(-0.5px);
+}
+
+.asana-badge-priority-alta {
+  background-color: #ffe5e5;
+  color: #d32f2f;
+}
+
+.asana-badge-priority-media {
+  background-color: #fff3c4;
+  color: #b27a00;
+}
+
+.asana-badge-priority-baja {
+  background-color: #e0f2fe;
+  color: #0284c7;
+}
+
+.asana-badge-assignee {
+  background-color: #f3f4f6;
+  color: var(--asana-text-main);
+  border: 1px solid var(--asana-border);
+}
+
+.asana-badge-date {
+  background-color: #f3f4f6;
+  color: var(--asana-text-main);
+  border: 1px solid var(--asana-border);
+  font-family: monospace;
+}
+
+/* Actions in rows */
+.asana-btn-delete-row {
+  background: none;
+  border: none;
+  color: var(--asana-text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  opacity: 0;
+  transition: all 0.15s;
+}
+
+.asana-btn-delete-row:hover {
+  background-color: #ffe5e5;
+  color: var(--asana-danger);
+}
+
+/* Inline Row Adder Form */
+.asana-inline-add-tr {
+  background-color: #ffffff;
+}
+
+.asana-inline-add-cell {
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
+}
+
+.asana-inline-add-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.asana-inline-add-icon {
+  font-size: 0.95rem;
+  color: var(--asana-text-muted);
+  font-weight: 500;
+}
+
+.asana-inline-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.85rem;
+  width: 100%;
+  color: var(--asana-text-title);
+  padding: 0.25rem 0;
+}
+
+.asana-inline-input::placeholder {
+  color: var(--asana-text-muted);
+  font-style: italic;
+}
+
+.asana-inline-add-btn {
+  background-color: var(--asana-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.asana-inline-add-btn:hover {
+  background-color: #1e52cf;
+}
+
+/* Board View Styling */
+.asana-board-columns {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+@media (min-width: 768px) {
+  .asana-board-columns {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.asana-board-col {
+  background-color: #f3f4f6;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border: 1px solid var(--asana-border);
+}
+
+.asana-board-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+  padding: 0.25rem;
+}
+
+.asana-board-col-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--asana-text-title);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.asana-board-col-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: #e5e7eb;
+  color: var(--asana-text-muted);
+  padding: 0.1rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.asana-board-empty {
+  border: 2px dashed #d1d5db;
+  border-radius: 0.375rem;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: var(--asana-text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Kanban Card */
+.asana-card {
+  background-color: #ffffff;
+  border-radius: 0.375rem;
+  padding: 1rem;
+  border: 1px solid var(--asana-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: transform 0.15s, box-shadow 0.15s;
+  cursor: grab;
+}
+
+.asana-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.asana-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.asana-card-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--asana-text-title);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.asana-card-title.completed {
+  color: var(--asana-text-muted);
+  text-decoration: line-through;
+}
+
+.asana-btn-delete-card {
+  background: none;
+  border: none;
+  color: var(--asana-text-muted);
+  cursor: pointer;
+  padding: 0.15rem;
+  border-radius: 0.25rem;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.asana-btn-delete-card:hover {
+  background-color: #ffe5e5;
+  color: var(--asana-danger);
+}
+
+.asana-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.asana-card-footer {
+  border-top: 1px solid #f3f4f6;
+  padding-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--asana-text-muted);
+}
+
+.asana-card-assignee-avatar {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  background-color: #3b82f6;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.65rem;
+}
+
+/* Animations */
+@keyframes slideInDown {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.asana-inline-select {
+  border: 1px solid var(--asana-border);
+  border-radius: 0.25rem;
+  padding: 0.15rem 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  outline: none;
+  background-color: #ffffff;
+  color: var(--asana-text-title);
+  cursor: pointer;
+}
+
+

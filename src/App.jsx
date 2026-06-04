@@ -592,11 +592,46 @@ function App() {
   );
 }
 
+// Helper functions for metadata persistence
+const loadLocalMetadata = () => {
+  try {
+    const data = localStorage.getItem('asana_tasks_metadata');
+    return data ? JSON.parse(data) : {};
+  } catch (e) {
+    console.error("Error reading localStorage:", e);
+    return {};
+  }
+};
+
+const saveLocalMetadata = (metadata) => {
+  try {
+    localStorage.setItem('asana_tasks_metadata', JSON.stringify(metadata));
+  } catch (e) {
+    console.error("Error saving to localStorage:", e);
+  }
+};
+
+const formatDateBrief = (dateStr) => {
+  if (!dateStr) return 'Sin fecha';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  const monthIdx = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+  return `${day} ${months[monthIdx] || ''}`;
+};
+
 function DependenciasDashboard() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [adding, setAdding] = useState(false);
+  
+  // Asana States
+  const [activeView, setActiveView] = useState('list'); // 'list' | 'board'
+  const [localMetadata, setLocalMetadata] = useState({});
+  const [activeDropdown, setActiveDropdown] = useState(null); // { taskId, field }
+  const [isAlertDismissed, setIsAlertDismissed] = useState(false);
 
   // Fetch tasks on mount
   useEffect(() => {
@@ -605,8 +640,34 @@ function DependenciasDashboard() {
 
   const fetchTasks = async () => {
     setLoading(true);
-    const data = await supabase.getTasks();
-    setTasks(data);
+    const dbTasks = await supabase.getTasks();
+    
+    // Load local metadata and merge
+    const meta = loadLocalMetadata();
+    let updatedMeta = { ...meta };
+    let hasChanges = false;
+
+    dbTasks.forEach(task => {
+      if (!updatedMeta[task.id]) {
+        // Assign default metadata for tasks that don't have it
+        const inThreeDays = new Date(Date.now() + 86400000 * 3);
+        const formattedDate = inThreeDays.toISOString().split('T')[0];
+        
+        updatedMeta[task.id] = {
+          priority: 'media',
+          assignee: 'Dirección',
+          dueDate: formattedDate
+        };
+        hasChanges = true;
+      }
+    });
+
+    if (hasChanges) {
+      saveLocalMetadata(updatedMeta);
+    }
+
+    setLocalMetadata(updatedMeta);
+    setTasks(dbTasks);
     setLoading(false);
   };
 
@@ -616,7 +677,21 @@ function DependenciasDashboard() {
     setAdding(true);
     const newTask = await supabase.addTask(newTaskTitle.trim());
     if (newTask) {
-      // Put the new task at the top
+      // Add default metadata for new task
+      const inThreeDays = new Date(Date.now() + 86400000 * 3);
+      const formattedDate = inThreeDays.toISOString().split('T')[0];
+      
+      const updatedMeta = {
+        ...localMetadata,
+        [newTask.id]: {
+          priority: 'media',
+          assignee: 'Dirección',
+          dueDate: formattedDate
+        }
+      };
+      saveLocalMetadata(updatedMeta);
+      setLocalMetadata(updatedMeta);
+      
       setTasks(prev => [newTask, ...prev]);
       setNewTaskTitle('');
     }
@@ -633,11 +708,30 @@ function DependenciasDashboard() {
   const handleDeleteTask = async (id) => {
     const success = await supabase.deleteTask(id);
     if (success) {
+      // Remove from tasks list
       setTasks(prev => prev.filter(t => t.id !== id));
+      
+      // Clean up metadata
+      const updatedMeta = { ...localMetadata };
+      delete updatedMeta[id];
+      saveLocalMetadata(updatedMeta);
+      setLocalMetadata(updatedMeta);
     }
   };
 
-  // Helper to format time elapsed
+  const updateMetadata = (taskId, field, value) => {
+    const updatedMeta = {
+      ...localMetadata,
+      [taskId]: {
+        ...localMetadata[taskId],
+        [field]: value
+      }
+    };
+    saveLocalMetadata(updatedMeta);
+    setLocalMetadata(updatedMeta);
+    setActiveDropdown(null);
+  };
+
   const getElapsedTime = (dateStr) => {
     const createdDate = new Date(dateStr);
     const nowDate = new Date();
@@ -647,167 +741,433 @@ function DependenciasDashboard() {
     const diffDays = Math.floor(diffHours / 24);
 
     if (diffMins < 1) return 'Hace unos segundos';
-    if (diffMins < 60) return `Hace ${diffMins} ${diffMins === 1 ? 'minuto' : 'minutos'}`;
-    if (diffHours < 24) return `Hace ${diffHours} ${diffHours === 1 ? 'hora' : 'horas'}`;
+    if (diffMins < 60) return `Hace ${diffMins}m`;
+    if (diffHours < 24) return `Hace ${diffHours}h`;
     return `Ya pasaron ${diffDays} ${diffDays === 1 ? 'día' : 'días'}`;
   };
 
-  // Filter tasks
+  const getElapsedTimeBadgeClass = (dateStr) => {
+    const createdDate = new Date(dateStr);
+    const nowDate = new Date();
+    const diffMs = nowDate - createdDate;
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffDays < 1) return 'asana-pill-blue';
+    if (diffDays < 3) return 'asana-pill-amber';
+    return 'asana-pill-red';
+  };
+
   const pendingTasks = tasks.filter(t => t.status === 'pending');
   const completedTasks = tasks.filter(t => t.status === 'completed');
 
-  // Find the oldest pending task
   const oldestPendingTask = pendingTasks.reduce((oldest, current) => {
     if (!oldest) return current;
     return new Date(current.created_at) < new Date(oldest.created_at) ? current : oldest;
   }, null);
 
-  return (
-    <div className="space-y-8">
-      {/* Header and Add Task */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 pb-5">
-        <div>
-          <h1 className="text-2xl font-bold font-outfit text-[#003366] flex items-center gap-2">
-            <span className="text-red-500">⚠️</span> DEPENDENCIAS — EQUIPO DIRECCIÓN GENERAL
-          </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Dashboard de control de procesos, aprobaciones y tareas pendientes.
-          </p>
-        </div>
-      </div>
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    return name.charAt(0).toUpperCase();
+  };
 
-      {/* Alerta de Tarea Pendiente más antigua */}
-      {oldestPendingTask && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-800 flex items-start gap-3 shadow-sm">
-          <span className="text-xl">⚠️</span>
-          <div>
-            <h4 className="font-bold text-sm">Alerta de Proceso en Espera</h4>
-            <p className="text-xs mt-0.5">
-              La tarea más antigua registrada ("<strong>{oldestPendingTask.title}</strong>") sigue pendiente. 
-              <strong> {getElapsedTime(oldestPendingTask.created_at)}</strong> desde que se inició.
-            </p>
+  return (
+    <div className="asana-layout-wrapper">
+      {/* Sidebar */}
+      <aside className="asana-sidebar">
+        <div className="asana-sidebar-workspace">
+          <div className="asana-sidebar-avatar">QM</div>
+          <div className="asana-sidebar-ws-info">
+            <div className="asana-sidebar-ws-name">Quadratín Morelos</div>
+            <div className="asana-sidebar-ws-role">Espacio de Dirección</div>
           </div>
         </div>
-      )}
 
-      {/* Formulario de Agregar Tarea */}
-      <div className="corp-card p-5">
-        <form onSubmit={handleAddTask} className="flex gap-3">
-          <input
-            type="text"
-            placeholder="Escribe una nueva dependencia o tarea de Dirección..."
-            value={newTaskTitle}
-            onChange={(e) => setNewTaskTitle(e.target.value)}
-            disabled={adding}
-            className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-slate-700 bg-white placeholder-slate-400 focus:outline-none focus:border-[#ff6600] text-sm"
-          />
-          <button
-            type="submit"
-            disabled={adding || !newTaskTitle.trim()}
-            className="px-6 py-2.5 bg-[#ff6600] text-white font-bold rounded-lg hover:bg-orange-600 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-          >
-            {adding ? 'Guardando...' : 'Agregar Proceso'}
-          </button>
-        </form>
-      </div>
+        <nav className="asana-sidebar-menu">
+          <div className="asana-sidebar-link active">
+            <span>📋</span> Tareas del Equipo
+          </div>
+          <div className="asana-sidebar-link" onClick={() => alert("Próximamente: Bandeja de entrada con notificaciones en tiempo real.")}>
+            <span>✉️</span> Bandeja de entrada
+          </div>
+          <div className="asana-sidebar-link" onClick={() => alert("Próximamente: Portafolios de proyectos generales.")}>
+            <span>📊</span> Portafolios
+          </div>
+        </nav>
 
-      {/* Grid de tareas */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Columna de Pendientes */}
-        <div className="lg:col-span-2 space-y-4">
-          <h3 className="font-bold font-outfit text-slate-700 flex items-center justify-between pb-2 border-b border-slate-200 text-sm">
-            <span>📋 Pendientes de Aprobación / Proceso</span>
-            <span className="text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full border border-red-100 font-bold">
-              {pendingTasks.length} tareas
-            </span>
-          </h3>
+        <div className="asana-sidebar-section-title">Proyectos</div>
+        <div className="asana-sidebar-projects">
+          <div className="asana-project-item active">
+            <span className="asana-dot" style={{ backgroundColor: 'var(--asana-primary)' }}></span>
+            <span className="truncate">Dependencias DG</span>
+          </div>
+          <div className="asana-project-item" onClick={() => alert("Proyecto secundario en planificación.")}>
+            <span className="asana-dot" style={{ backgroundColor: 'var(--asana-amber)' }}></span>
+            <span className="truncate">Reporte de Avances</span>
+          </div>
+        </div>
+      </aside>
 
+      {/* Main Workspace Area */}
+      <main className="asana-workspace-main">
+        {/* Project Header */}
+        <header className="asana-proj-header">
+          <div className="asana-proj-meta-bar">
+            <div className="asana-proj-title-wrapper">
+              <div className="asana-proj-icon">📌</div>
+              <div>
+                <h1 className="asana-proj-title">Dependencias Dirección General</h1>
+                <p className="asana-proj-subtitle">Seguimiento de procesos, aprobaciones y tareas del equipo directivo.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="asana-proj-nav-tabs">
+            <button 
+              className={`asana-view-tab ${activeView === 'list' ? 'active' : ''}`}
+              onClick={() => setActiveView('list')}
+            >
+              Lista
+            </button>
+            <button 
+              className={`asana-view-tab ${activeView === 'board' ? 'active' : ''}`}
+              onClick={() => setActiveView('board')}
+            >
+              Tablero (Kanban)
+            </button>
+          </div>
+        </header>
+
+        {/* Retraso Alert Banner */}
+        {oldestPendingTask && !isAlertDismissed && (
+          <div className="asana-retraso-banner">
+            <div className="asana-retraso-content">
+              <span>⚠️</span>
+              <div>
+                <strong>Alerta de Retraso:</strong> La dependencia pendiente más antigua es "<strong>{oldestPendingTask.title}</strong>", 
+                asignada a <strong>{localMetadata[oldestPendingTask.id]?.assignee || 'Dirección'}</strong>. Ha transcurrido <strong>{getElapsedTime(oldestPendingTask.created_at)}</strong> desde su creación.
+              </div>
+            </div>
+            <button className="asana-banner-close" onClick={() => setIsAlertDismissed(true)}>✕</button>
+          </div>
+        )}
+
+        {/* Workspace Body */}
+        <div className="asana-workspace-body">
           {loading ? (
-            <div className="text-center py-10 text-slate-400 text-sm">Cargando tareas desde Supabase...</div>
-          ) : pendingTasks.length === 0 ? (
-            <div className="text-center py-10 text-slate-400 text-sm bg-white border border-slate-100 rounded-xl">
-              🎉 ¡No hay dependencias pendientes! Todo marcha al día.
+            <div className="asana-empty-state">
+              <span className="inline-block animate-spin mr-2">⏳</span> Cargando dependencias desde Supabase...
+            </div>
+          ) : activeView === 'list' ? (
+            /* Vista de Lista */
+            <div className="asana-list-container">
+              <table className="asana-list-table">
+                <thead>
+                  <tr>
+                    <th className="asana-th" style={{ width: '40px' }}></th>
+                    <th className="asana-th">Nombre de la tarea</th>
+                    <th className="asana-th" style={{ width: '130px' }}>Responsable</th>
+                    <th className="asana-th" style={{ width: '120px' }}>Fecha límite</th>
+                    <th className="asana-th" style={{ width: '100px' }}>Prioridad</th>
+                    <th className="asana-th" style={{ width: '140px' }}>Tiempo transcurrido</th>
+                    <th className="asana-th" style={{ width: '50px' }}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* Tareas Activas */}
+                  {pendingTasks.map(task => {
+                    const meta = localMetadata[task.id] || { priority: 'media', assignee: 'Dirección', dueDate: '' };
+                    return (
+                      <tr key={task.id} className="asana-tr">
+                        <td className="asana-td">
+                          <div 
+                            className="asana-circle-checkbox" 
+                            onClick={() => handleCompleteTask(task.id)}
+                            title="Marcar como completada"
+                          />
+                        </td>
+                        <td className="asana-td">
+                          <div className="asana-task-title-cell" title={task.title}>{task.title}</div>
+                        </td>
+                        <td className="asana-td">
+                          {activeDropdown?.taskId === task.id && activeDropdown?.field === 'assignee' ? (
+                            <select 
+                              value={meta.assignee || 'Dirección'} 
+                              onChange={(e) => updateMetadata(task.id, 'assignee', e.target.value)}
+                              onBlur={() => setActiveDropdown(null)}
+                              autoFocus
+                              className="asana-inline-select"
+                            >
+                              <option value="Dirección">Dirección</option>
+                              <option value="Redacción">Redacción</option>
+                              <option value="Diseño">Diseño</option>
+                              <option value="Redes">Redes</option>
+                            </select>
+                          ) : (
+                            <button 
+                              className="asana-badge-pill asana-badge-assignee"
+                              onClick={() => setActiveDropdown({ taskId: task.id, field: 'assignee' })}
+                            >
+                              👤 {meta.assignee || 'Dirección'}
+                            </button>
+                          )}
+                        </td>
+                        <td className="asana-td">
+                          {activeDropdown?.taskId === task.id && activeDropdown?.field === 'dueDate' ? (
+                            <input 
+                              type="date"
+                              value={meta.dueDate || ''} 
+                              onChange={(e) => updateMetadata(task.id, 'dueDate', e.target.value)}
+                              onBlur={() => setActiveDropdown(null)}
+                              autoFocus
+                              className="asana-inline-select"
+                            />
+                          ) : (
+                            <button 
+                              className="asana-badge-pill asana-badge-date"
+                              onClick={() => setActiveDropdown({ taskId: task.id, field: 'dueDate' })}
+                            >
+                              📅 {meta.dueDate ? formatDateBrief(meta.dueDate) : 'Sin fecha'}
+                            </button>
+                          )}
+                        </td>
+                        <td className="asana-td">
+                          {activeDropdown?.taskId === task.id && activeDropdown?.field === 'priority' ? (
+                            <select 
+                              value={meta.priority || 'media'} 
+                              onChange={(e) => updateMetadata(task.id, 'priority', e.target.value)}
+                              onBlur={() => setActiveDropdown(null)}
+                              autoFocus
+                              className="asana-inline-select"
+                            >
+                              <option value="alta">Alta</option>
+                              <option value="media">Media</option>
+                              <option value="baja">Baja</option>
+                            </select>
+                          ) : (
+                            <button 
+                              className={`asana-badge-pill asana-badge-priority-${meta.priority || 'media'}`}
+                              onClick={() => setActiveDropdown({ taskId: task.id, field: 'priority' })}
+                            >
+                              ⚡ {(meta.priority || 'media').toUpperCase()}
+                            </button>
+                          )}
+                        </td>
+                        <td className="asana-td">
+                          <span className={`asana-pill ${getElapsedTimeBadgeClass(task.created_at)}`}>
+                            ⏱️ {getElapsedTime(task.created_at)}
+                          </span>
+                        </td>
+                        <td className="asana-td text-center">
+                          <button 
+                            className="asana-btn-delete-row"
+                            onClick={() => handleDeleteTask(task.id)}
+                            title="Eliminar dependencia"
+                          >
+                            🗑️
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                  {/* Inline Add Row */}
+                  <tr className="asana-inline-add-tr">
+                    <td colSpan={7} className="asana-inline-add-cell">
+                      <form onSubmit={handleAddTask} className="asana-inline-add-input-wrapper">
+                        <span className="asana-inline-add-icon">+</span>
+                        <input 
+                          type="text" 
+                          placeholder="Agregar una nueva tarea o proceso de Dirección..."
+                          value={newTaskTitle}
+                          onChange={(e) => setNewTaskTitle(e.target.value)}
+                          className="asana-inline-input"
+                          disabled={adding}
+                        />
+                        {newTaskTitle.trim() && (
+                          <button type="submit" disabled={adding} className="asana-inline-add-btn">
+                            {adding ? 'Agregando...' : 'Crear Tarea'}
+                          </button>
+                        )}
+                      </form>
+                    </td>
+                  </tr>
+
+                  {/* Tareas Completadas (en la lista se muestran abajo) */}
+                  {completedTasks.length > 0 && (
+                    <>
+                      <tr className="bg-gray-50">
+                        <td colSpan={7} className="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider border-t border-b text-slate-500 bg-slate-50">
+                          Tareas Completadas
+                        </td>
+                      </tr>
+                      {completedTasks.map(task => {
+                        const meta = localMetadata[task.id] || { priority: 'media', assignee: 'Dirección', dueDate: '' };
+                        return (
+                          <tr key={task.id} className="asana-tr opacity-60">
+                            <td className="asana-td">
+                              <div className="asana-circle-checkbox completed" />
+                            </td>
+                            <td className="asana-td">
+                              <div className="asana-task-title-cell completed" title={task.title}>{task.title}</div>
+                            </td>
+                            <td className="asana-td">
+                              <span className="asana-badge-pill asana-badge-assignee cursor-default">
+                                👤 {meta.assignee || 'Dirección'}
+                              </span>
+                            </td>
+                            <td className="asana-td">
+                              <span className="asana-badge-pill asana-badge-date cursor-default">
+                                📅 {meta.dueDate ? formatDateBrief(meta.dueDate) : 'Sin fecha'}
+                              </span>
+                            </td>
+                            <td className="asana-td">
+                              <span className={`asana-badge-pill asana-badge-priority-${meta.priority || 'media'} cursor-default`}>
+                                ⚡ {(meta.priority || 'media').toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="asana-td">
+                              <span className="text-xs text-slate-400">
+                                Completada el {new Date(task.completed_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}
+                              </span>
+                            </td>
+                            <td className="asana-td text-center">
+                              <button 
+                                className="asana-btn-delete-row"
+                                onClick={() => handleDeleteTask(task.id)}
+                                title="Eliminar registro"
+                              >
+                                🗑️
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </>
+                  )}
+                </tbody>
+              </table>
             </div>
           ) : (
-            <div className="space-y-3">
-              {pendingTasks.map((task, index) => {
-                const numberStr = String(index + 1).padStart(2, '0');
-                return (
-                  <div key={task.id} className="flex border border-red-100 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
-                    {/* Número con fondo rojo/naranja al estilo del PDF */}
-                    <div className="w-12 bg-red-800 text-white flex items-center justify-center font-bold text-lg font-outfit shrink-0">
-                      {numberStr}
-                    </div>
-                    {/* Contenido */}
-                    <div className="flex-1 p-4 flex items-center justify-between gap-4">
-                      <div>
-                        <p className="text-slate-800 text-sm font-medium">{task.title}</p>
-                        <p className="text-xs text-red-500 font-semibold mt-1 flex items-center gap-1">
-                          ⏱️ {getElapsedTime(task.created_at)}
-                        </p>
-                      </div>
-                      <div className="flex gap-2 shrink-0">
-                        <button
+            /* Vista de Tablero (Board View) */
+            <div className="asana-board-columns">
+              {/* Columna Pendientes */}
+              <div className="asana-board-col">
+                <div className="asana-board-col-header">
+                  <div className="asana-board-col-title">
+                    <span className="text-amber-500">▶</span> Tareas Activas
+                  </div>
+                  <span className="asana-board-col-count">{pendingTasks.length}</span>
+                </div>
+
+                {pendingTasks.length === 0 ? (
+                  <div className="asana-board-empty">
+                    🎉 ¡No hay dependencias activas! Todo al día.
+                  </div>
+                ) : (
+                  pendingTasks.map(task => {
+                    const meta = localMetadata[task.id] || { priority: 'media', assignee: 'Dirección', dueDate: '' };
+                    return (
+                      <div key={task.id} className="asana-card">
+                        <div className="asana-card-header">
+                          <div className="asana-card-title">{task.title}</div>
+                          <button 
+                            className="asana-btn-delete-card"
+                            onClick={() => handleDeleteTask(task.id)}
+                            title="Eliminar tarea"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                        <div className="asana-card-meta">
+                          <span className={`asana-badge-pill asana-badge-priority-${meta.priority || 'media'} cursor-default`}>
+                            ⚡ {meta.priority?.toUpperCase()}
+                          </span>
+                          <span className="asana-badge-pill asana-badge-date cursor-default">
+                            📅 {meta.dueDate ? formatDateBrief(meta.dueDate) : 'Sin fecha'}
+                          </span>
+                        </div>
+                        <div className="asana-card-footer">
+                          <div className="flex items-center gap-1.5">
+                            <div className="asana-card-assignee-avatar" title={meta.assignee}>
+                              {getInitials(meta.assignee)}
+                            </div>
+                            <span className="text-xs text-slate-500">{meta.assignee}</span>
+                          </div>
+                          <span className={`asana-pill ${getElapsedTimeBadgeClass(task.created_at)}`}>
+                            ⏱️ {getElapsedTime(task.created_at)}
+                          </span>
+                        </div>
+                        <button 
+                          className="mt-2 w-full py-1 text-xs font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded border border-emerald-200 transition-colors"
                           onClick={() => handleCompleteTask(task.id)}
-                          className="px-3 py-1.5 bg-emerald-50 text-emerald-600 border border-emerald-250 text-xs font-bold rounded-lg hover:bg-emerald-100 transition-colors"
                         >
                           Completar
                         </button>
-                        <button
-                          onClick={() => handleDeleteTask(task.id)}
-                          className="px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 text-xs font-bold rounded-lg hover:bg-red-100 transition-colors"
-                        >
-                          Eliminar
-                        </button>
                       </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                    );
+                  })
+                )}
+              </div>
 
-        {/* Columna de Completadas */}
-        <div className="space-y-4">
-          <h3 className="font-bold font-outfit text-slate-700 flex items-center justify-between pb-2 border-b border-slate-200 text-sm">
-            <span>✅ Completadas recientemente</span>
-            <span className="text-xs bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-100 font-bold">
-              {completedTasks.length} tareas
-            </span>
-          </h3>
-
-          {loading ? (
-            <div className="text-center py-10 text-slate-400 text-sm">Cargando...</div>
-          ) : completedTasks.length === 0 ? (
-            <div className="text-center py-10 text-slate-400 text-sm bg-white border border-slate-100 rounded-xl">
-              No hay tareas completadas todavía.
-            </div>
-          ) : (
-            <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
-              {completedTasks.map((task) => (
-                <div key={task.id} className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-3 opacity-75">
-                  <div className="min-w-0">
-                    <p className="text-slate-500 text-sm line-through truncate">{task.title}</p>
-                    <p className="text-[10px] text-slate-400 mt-1">
-                      Completada el {new Date(task.completed_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}
-                    </p>
+              {/* Columna Completadas */}
+              <div className="asana-board-col">
+                <div className="asana-board-col-header">
+                  <div className="asana-board-col-title">
+                    <span className="text-emerald-500">✓</span> Completadas
                   </div>
-                  <button
-                    onClick={() => handleDeleteTask(task.id)}
-                    className="p-1 bg-red-50 text-red-600 border border-red-150 rounded-lg hover:bg-red-100 transition-colors text-xs"
-                    title="Eliminar registro"
-                  >
-                    🗑️
-                  </button>
+                  <span className="asana-board-col-count">{completedTasks.length}</span>
                 </div>
-              ))}
+
+                {completedTasks.length === 0 ? (
+                  <div className="asana-board-empty">
+                    No hay tareas completadas recientemente.
+                  </div>
+                ) : (
+                  completedTasks.map(task => {
+                    const meta = localMetadata[task.id] || { priority: 'media', assignee: 'Dirección', dueDate: '' };
+                    return (
+                      <div key={task.id} className="asana-card opacity-60">
+                        <div className="asana-card-header">
+                          <div className="asana-card-title completed">{task.title}</div>
+                          <button 
+                            className="asana-btn-delete-card"
+                            onClick={() => handleDeleteTask(task.id)}
+                            title="Eliminar registro"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                        <div className="asana-card-meta">
+                          <span className={`asana-badge-pill asana-badge-priority-${meta.priority || 'media'} cursor-default`}>
+                            ⚡ {meta.priority?.toUpperCase()}
+                          </span>
+                          <span className="asana-badge-pill asana-badge-date cursor-default">
+                            📅 {meta.dueDate ? formatDateBrief(meta.dueDate) : 'Sin fecha'}
+                          </span>
+                        </div>
+                        <div className="asana-card-footer">
+                          <div className="flex items-center gap-1.5">
+                            <div className="asana-card-assignee-avatar bg-emerald-500" title={meta.assignee}>
+                              {getInitials(meta.assignee)}
+                            </div>
+                            <span className="text-xs text-slate-500">{meta.assignee}</span>
+                          </div>
+                          <span className="text-[10px] text-slate-400">
+                            Completada el {new Date(task.completed_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 }
 
 export default App;
+
