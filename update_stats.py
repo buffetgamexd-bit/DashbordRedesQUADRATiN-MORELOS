@@ -1,184 +1,177 @@
 import requests
-import re
 import json
 import os
 import datetime
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
 import time
 
 # Configurations
 DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src", "data.js")
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Accept-Language": "en-US,en;q=0.9"
-}
+# RapidAPI Key: reads from env variable RAPIDAPI_KEY, fallback to user's current key
+RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY", "ca3f2f8d2msh2837e1472c671ap19ab72jsnc2437284c988")
 
-def parse_abbreviated_number(num_str):
-    """Converts strings like '20.5K' or '81.096' into integers."""
-    # Clean string
-    num_str = num_str.strip().lower()
-    
-    # Check for multiplier
-    multiplier = 1
-    if 'k' in num_str:
-        multiplier = 1000
-        num_str = num_str.replace('k', '')
-    elif 'm' in num_str:
-        multiplier = 1000000
-        num_str = num_str.replace('m', '')
-        
-    # Remove dots and commas for normal numbers (like 81.096 or 81,096)
-    # If there's a decimal dot in a K abbreviation (e.g. 20.5), we keep it as float first
-    if '.' in num_str or ',' in num_str:
-        if multiplier > 1:
-            # e.g. "20.5" or "20,5" -> float
-            num_str = num_str.replace(',', '.')
-            try:
-                return int(float(num_str) * multiplier)
-            except ValueError:
-                pass
-        else:
-            # e.g. "81.096" or "81,096" -> replace delimiter to get 81096
-            num_str = num_str.replace('.', '').replace(',', '')
-            
-    try:
-        return int(float(num_str) * multiplier)
-    except ValueError:
-        # Fallback if parsing fails
-        cleaned = re.sub(r'[^\d]', '', num_str)
-        return int(cleaned) if cleaned else None
+def find_count_recursive(data, target_keys):
+    """Recursively search for a count value matching target keys in nested data structures."""
+    if isinstance(data, dict):
+        # First check direct keys at this level
+        for k in target_keys:
+            if k in data:
+                val = data[k]
+                if isinstance(val, (int, float)):
+                    return int(val)
+                elif isinstance(val, str):
+                    try:
+                        return int(float(val))
+                    except ValueError:
+                        pass
+                elif isinstance(val, dict) and "count" in val:
+                    c = val["count"]
+                    if isinstance(c, (int, float)):
+                        return int(c)
+        # Otherwise descend into sub-structures
+        for v in data.values():
+            res = find_count_recursive(v, target_keys)
+            if res is not None:
+                return res
+    elif isinstance(data, list):
+        for item in data:
+            res = find_count_recursive(item, target_keys)
+            if res is not None:
+                return res
+    return None
 
 def get_instagram_followers():
-    print("Scraping Instagram via Selenium...")
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument(f"user-agent={HEADERS['User-Agent']}")
-    
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-    
+    print("Fetching Instagram followers via RapidAPI...")
+    url = "https://instagram-looter2.p.rapidapi.com/profile"
+    headers = {
+        "x-rapidapi-key": RAPIDAPI_KEY,
+        "x-rapidapi-host": "instagram-looter2.p.rapidapi.com"
+    }
+    params = {"username": "quadratin.morelos"}
     try:
-        url = "https://www.instagram.com/quadratin.morelos/"
-        driver.get(url)
-        time.sleep(5)  # Wait for page to render fully
-        
-        html = driver.page_source
-        
-        # Regex search for: e.g. "20K seguidores" or "20,500 seguidores" or "20.5k followers"
-        matches = re.findall(r'([\d.,]+\s*[kKmM]?)\s*(?:followers|seguidores)', html, re.I)
-        if matches:
-            # The first match is usually the followers count
-            print(f"Instagram raw matches: {matches}")
-            followers = parse_abbreviated_number(matches[0])
-            print(f"Instagram followers parsed: {followers}")
-            return followers
+        r = requests.get(url, headers=headers, params=params, timeout=15)
+        if r.status_code == 200:
+            data = r.json()
+            count = None
+            if isinstance(data, dict):
+                # Try standard graphql paths
+                count = (data.get("user", {}).get("edge_followed_by", {}).get("count") or
+                         data.get("graphql", {}).get("user", {}).get("edge_followed_by", {}).get("count"))
+            if count is None:
+                # Recursive fallback
+                count = find_count_recursive(data, ["edge_followed_by", "follower_count", "followers"])
+            
+            if count is not None:
+                print(f"Instagram followers: {count}")
+                return count
+            else:
+                print(f"Instagram: Could not find follower count in JSON: {str(data)[:300]}")
         else:
-            print("Instagram: No followers match found in page source.")
-            return None
+            print(f"Instagram API Error {r.status_code}: {r.text}")
     except Exception as e:
-        print(f"Instagram scrape failed: {e}")
-        return None
-    finally:
-        driver.quit()
+        print(f"Instagram API Exception: {e}")
+    return None
 
 def get_tiktok_followers():
-    print("Scraping TikTok...")
-    url = "https://www.tiktok.com/@quadratinmorelos"
-    
-    # Try requests first, then fallback to urllib, with up to 3 retries
-    for attempt in range(3):
-        try:
-            r = requests.get(url, headers=HEADERS, timeout=10)
-            if r.status_code == 200:
-                html = r.text
+    print("Fetching TikTok followers via RapidAPI...")
+    url = "https://tiktok-scraper7.p.rapidapi.com/user/detail"
+    headers = {
+        "x-rapidapi-key": RAPIDAPI_KEY,
+        "x-rapidapi-host": "tiktok-scraper7.p.rapidapi.com"
+    }
+    params = {"unique_id": "quadratinmorelos"}
+    try:
+        r = requests.get(url, headers=headers, params=params, timeout=15)
+        if r.status_code == 200:
+            data = r.json()
+            count = None
+            if isinstance(data, dict):
+                d = data.get("data", {})
+                if isinstance(d, dict):
+                    # Try stats key
+                    count = d.get("stats", {}).get("followerCount") or d.get("user", {}).get("stats", {}).get("followerCount")
+            if count is None:
+                count = find_count_recursive(data, ["followerCount", "follower_count", "followers"])
+            
+            if count is not None:
+                print(f"TikTok followers: {count}")
+                return count
             else:
-                print(f"TikTok attempt {attempt+1} requests status code: {r.status_code}")
-                html = ""
-        except Exception as e:
-            print(f"TikTok attempt {attempt+1} requests failed: {e}")
-            html = ""
-            
-        if not html:
-            # Fallback to urllib
-            try:
-                import urllib.request
-                req = urllib.request.Request(url, headers=HEADERS)
-                with urllib.request.urlopen(req, timeout=10) as response:
-                    html = response.read().decode('utf-8', errors='ignore')
-            except Exception as e:
-                print(f"TikTok attempt {attempt+1} urllib failed: {e}")
-                html = ""
-                
-        if html:
-            # Search for followerCount in various formats
-            patterns = [
-                r'"followerCount":\s*(\d+)',
-                r'followerCount\\":\s*(\d+)',
-                r'"followers"\s*:\s*(\d+)',
-                r'followers\\":\s*(\d+)'
-            ]
-            for pat in patterns:
-                match = re.search(pat, html)
-                if match:
-                    followers = int(match.group(1))
-                    print(f"TikTok followers found: {followers}")
-                    return followers
-            
-            # If we got HTML but no matches, let's print a warning
-            print(f"TikTok attempt {attempt+1} loaded HTML (length {len(html)}) but no pattern matched.")
-            
-        time.sleep(2)
-        
-    print("TikTok: Failed to extract followerCount after all attempts.")
+                print(f"TikTok: Could not find follower count in JSON: {str(data)[:300]}")
+        else:
+            print(f"TikTok API Error {r.status_code}: {r.text}")
+    except Exception as e:
+        print(f"TikTok API Exception: {e}")
     return None
 
 def get_facebook_followers():
-    print("Scraping Facebook Page Plugin...")
-    # Using the Facebook Page Plugin to bypass rate limits and login walls
-    url = "https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2FQuadratinMorelos&tabs&width=340&height=130&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true"
+    # Facebook has a limit of 25/month. Skip on weekends.
+    is_weekend = datetime.datetime.today().weekday() in (5, 6)
+    if is_weekend:
+        print("Facebook API call skipped (weekend limit preservation)")
+        return None
+
+    print("Fetching Facebook followers via RapidAPI...")
+    url = "https://facebook-pages-scraper2.p.rapidapi.com/get_facebook_pages_details"
+    headers = {
+        "x-rapidapi-key": RAPIDAPI_KEY,
+        "x-rapidapi-host": "facebook-pages-scraper2.p.rapidapi.com"
+    }
+    params = {
+        "link": "https://www.facebook.com/QuadratinMorelos",
+        "show_verified_badge": "false",
+        "proxy_country": "us"
+    }
     try:
-        r = requests.get(url, headers=HEADERS, timeout=10)
+        r = requests.get(url, headers=headers, params=params, timeout=15)
         if r.status_code == 200:
-            # Search for e.g. "81.096 seguidores" or "81K likes"
-            matches = re.findall(r'([\d.,]+\s*[kKmM]?)\s*(?:likes|Me gusta|followers|seguidores)', r.text, re.I)
-            if matches:
-                # The first one is typically the followers count
-                print(f"Facebook raw matches: {matches}")
-                followers = parse_abbreviated_number(matches[0])
-                print(f"Facebook followers: {followers}")
-                return followers
+            data = r.json()
+            count = None
+            if isinstance(data, dict):
+                d = data.get("data", {})
+                if isinstance(d, dict):
+                    count = d.get("followers") or d.get("followers_count") or d.get("likes") or d.get("likes_count")
+            if count is None:
+                count = find_count_recursive(data, ["followers", "followers_count", "likes", "likes_count"])
+            
+            if count is not None:
+                print(f"Facebook followers: {count}")
+                return count
             else:
-                print("Facebook: no follower matches found in plugin HTML.")
+                print(f"Facebook: Could not find follower/like count in JSON: {str(data)[:300]}")
         else:
-            print(f"Facebook plugin status code: {r.status_code}")
+            print(f"Facebook API Error {r.status_code}: {r.text}")
     except Exception as e:
-        print(f"Facebook failed: {e}")
+        print(f"Facebook API Exception: {e}")
     return None
 
 def get_twitter_followers():
-    print("Scraping Twitter/X...")
-    url = "https://x.com/Quadratin_Mor"
+    print("Fetching Twitter/X followers via RapidAPI...")
+    url = "https://twitter-api45.p.rapidapi.com/screenname.php"
+    headers = {
+        "x-rapidapi-key": RAPIDAPI_KEY,
+        "x-rapidapi-host": "twitter-api45.p.rapidapi.com"
+    }
+    params = {"screenname": "Quadratin_Mor"}
     try:
-        r = requests.get(url, headers=HEADERS, timeout=10)
+        r = requests.get(url, headers=headers, params=params, timeout=15)
         if r.status_code == 200:
-            # Search for `"followers_count":(\d+)` inside the initial state JSON
-            match = re.search(r'"followers_count":(\d+)', r.text)
-            if match:
-                followers = int(match.group(1))
-                print(f"Twitter/X followers: {followers}")
-                return followers
+            data = r.json()
+            count = None
+            if isinstance(data, dict):
+                count = data.get("followers_count") or data.get("sub_count") or data.get("followers")
+            if count is None:
+                count = find_count_recursive(data, ["followers_count", "sub_count", "followers"])
+            
+            if count is not None:
+                print(f"Twitter/X followers: {count}")
+                return count
             else:
-                print("Twitter/X: followers_count not found in HTML.")
+                print(f"Twitter/X: Could not find follower count in JSON: {str(data)[:300]}")
         else:
-            print(f"Twitter/X status code: {r.status_code}")
+            print(f"Twitter/X API Error {r.status_code}: {r.text}")
     except Exception as e:
-        print(f"Twitter/X failed: {e}")
+        print(f"Twitter/X API Exception: {e}")
     return None
 
 def main():
@@ -234,7 +227,9 @@ def main():
     failed_platforms = []
     if instagram is None: failed_platforms.append("instagram")
     if tiktok is None: failed_platforms.append("tiktok")
-    if facebook is None: failed_platforms.append("facebook")
+    # Facebook is only "failed" if it's not a weekend and returned None
+    is_weekend = datetime.datetime.today().weekday() in (5, 6)
+    if facebook is None and not is_weekend: failed_platforms.append("facebook")
     if twitter is None: failed_platforms.append("twitter")
     
     if failed_platforms:

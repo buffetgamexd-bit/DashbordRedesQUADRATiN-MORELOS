@@ -18,7 +18,7 @@ export const qm_data = {
       "date": "2026-06-04",
       "instagram": 20000,
       "tiktok": 5857,
-      "facebook": 81096,
+      "facebook": 81097,
       "twitter": 10635
     }
   ],
