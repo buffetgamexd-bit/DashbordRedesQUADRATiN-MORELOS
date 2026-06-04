@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { qm_data } from './data';
+import { qm_analysis } from './analysis';
 import {
   AreaChart,
   Area,
@@ -59,42 +60,6 @@ const TwitterXLogo = ({ className }) => (
   </svg>
 );
 
-// Static notes mapping directly to the PDF
-const REPORT_NOTES = {
-  redes: {
-    title: "Avance Operativo - Redes Sociales",
-    logros: [
-      "A 7 días de mayo, se logró superar la meta mensual de seguidores en IG (13.8K+).",
-      "Aumentamos la frecuencia de publicación de Sofía de 1 a 2 videos diarios.",
-      "Mejoramos significativamente el tiempo de respuesta inicial en comentarios de FB.",
-      "Se lanzó con éxito la dinámica de interacción por el Día de las Madres."
-    ],
-    accionables: [
-      "Probar contenido diferenciado en TikTok con Sofía y Romina (5 contenidos diarios).",
-      "Enviar propuesta de pauta semanal para Facebook (2 a 3 contenidos diarios).",
-      "Pedir cotización formal a la agencia de Reuters para contratación (Jaki).",
-      "Definir el flujo de aportación de Bigote Chilaquiler a 'Raíces Morelos'."
-    ],
-    dependencias: [
-      "Aprobación de Dirección General (Cerón) del diseño final para estudio Raíces Morelos.",
-      "Esta semana se tendrá un particular enfoque en el crecimiento de TikTok y Facebook.",
-      "Se tuvo que mover la fecha tentativa para entrevista de Raíces Morelos (se programará según el avance del estudio)."
-    ]
-  },
-  radar: {
-    title: "Avance Operativo - Radar Analytics",
-    logros: [
-      "Se llevó a cabo la reunión con el equipo de Laboratorio para discutir la metodología, las metas y el flujo de trabajo necesario."
-    ],
-    accionables: [
-      "El equipo de Laboratorio se comprometió a enviar un resumen de las herramientas funcionales para automatización.",
-      "Se tocará base de los avances el miércoles 6 de mayo (se requiere reagendar)."
-    ],
-    dependencias: [
-      "Definir si será necesario adquirir la clasificación de medios por Tier 1."
-    ]
-  }
-};
 
 function App() {
   const [selectedChartTab, setSelectedChartTab] = useState('consolidado');
@@ -197,7 +162,7 @@ function App() {
     };
   });
 
-  const activeNotes = REPORT_NOTES[activeReportTab];
+  const activeNotes = qm_analysis[activeReportTab];
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] text-slate-100 font-sans antialiased overflow-x-hidden">
@@ -411,8 +376,8 @@ function App() {
         {/* Charts & Pipeline Info */}
         <section className="mb-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* Main Chart Card (span 2) */}
-          <div className="lg:col-span-2 corp-card">
+          {/* Main Chart Card (span 3) */}
+          <div className="lg:col-span-3 corp-card">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
               <div>
                 <h2 className="text-lg font-bold font-outfit text-[#003366]">Histórico de Crecimiento</h2>
@@ -516,55 +481,7 @@ function App() {
             </div>
           </div>
 
-          {/* Pipeline Info Panel */}
-          <div className="corp-card flex flex-col justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 bg-orange-50 text-[#ff6600] rounded-xl border border-orange-100">
-                  <Clock size={20} />
-                </div>
-                <h3 className="text-md font-bold font-outfit text-[#003366]">Automatización diaria</h3>
-              </div>
-              
-              <p className="text-slate-500 text-xs leading-relaxed mb-4">
-                Las estadísticas de seguidores se actualizan de forma autónoma diariamente a las <strong>7:00 AM (Morelos)</strong> utilizando la infraestructura de GitHub Actions + Vercel sin costo:
-              </p>
 
-              <div className="space-y-3 text-[11px] text-slate-500">
-                <div className="flex items-start gap-2.5">
-                  <div className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-600 text-[10px] shrink-0 mt-0.5">1</div>
-                  <div>
-                    <strong className="text-slate-700 block">Trigger Cron Diario</strong>
-                    GitHub Actions levanta un contenedor invisible con Chrome cada mañana a las 7:00 AM.
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2.5">
-                  <div className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-600 text-[10px] shrink-0 mt-0.5">2</div>
-                  <div>
-                    <strong className="text-slate-700 block">Scraper en Python</strong>
-                    Extrae los seguidores reales directo de las URL oficiales y los guarda en <code className="bg-[#f3f4f6] text-[#003366] text-[10px] px-1 py-0.5 rounded font-mono">src/data.js</code>.
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2.5">
-                  <div className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-600 text-[10px] shrink-0 mt-0.5">3</div>
-                  <div>
-                    <strong className="text-slate-700 block">Despliegue Automático</strong>
-                    El workflow guarda los cambios en GitHub, lo que activa a Vercel para recompilar la web con las nuevas cifras en segundos.
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-slate-100 bg-[#f8f9fa] p-3 rounded-lg border border-[#e5e7eb]">
-              <span className="text-[10px] text-slate-400 uppercase tracking-widest font-mono block mb-1">Archivos del sistema:</span>
-              <ul className="space-y-0.5 font-mono text-[10px] text-slate-600">
-                <li className="flex items-center gap-1">▪ <span className="text-[#ff6600]">update_stats.py</span> (Core)</li>
-                <li className="flex items-center gap-1">▪ <span className="text-[#003366]">update_stats.yml</span> (Cron)</li>
-              </ul>
-            </div>
-          </div>
         </section>
 
         {/* 3. Avance Operativo y Planificación (Solo Lectura) */}
@@ -575,7 +492,7 @@ function App() {
               {activeNotes.title}
             </h2>
             <span className="text-xs font-bold bg-[#e6f0fa] text-[#003366] px-3 py-1 rounded-full uppercase tracking-wider">
-              Datos Estáticos del PDF
+              {activeNotes.is_dynamic ? 'Generado con IA (Claude)' : 'Datos Estáticos del PDF'}
             </span>
           </div>
           

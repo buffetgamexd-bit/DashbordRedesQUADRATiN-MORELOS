@@ -4,11 +4,32 @@ import os
 import datetime
 import time
 
+def load_env_file():
+    # Try parent directory .env (workspace root) and current directory .env
+    dirs = [
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        os.path.dirname(os.path.abspath(__file__))
+    ]
+    for d in dirs:
+        env_path = os.path.join(d, ".env")
+        if os.path.exists(env_path):
+            with open(env_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        # Strip optional quotes
+                        v = v.strip("'\"")
+                        os.environ[k.strip()] = v
+
+# Load environment variables from .env
+load_env_file()
+
 # Configurations
 DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src", "data.js")
 
 # RapidAPI Key: reads from env variable RAPIDAPI_KEY, fallback to user's current key
-RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY", "ca3f2f8d2msh2837e1472c671ap19ab72jsnc2437284c988")
+RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY", "ca3f32f8d2msh2837e1e472c671ap19ab72jsnc2437284c988")
 
 def find_count_recursive(data, target_keys):
     """Recursively search for a count value matching target keys in nested data structures."""
@@ -55,7 +76,8 @@ def get_instagram_followers():
             count = None
             if isinstance(data, dict):
                 # Try standard graphql paths
-                count = (data.get("user", {}).get("edge_followed_by", {}).get("count") or
+                count = (data.get("edge_followed_by", {}).get("count") or
+                         data.get("user", {}).get("edge_followed_by", {}).get("count") or
                          data.get("graphql", {}).get("user", {}).get("edge_followed_by", {}).get("count"))
             if count is None:
                 # Recursive fallback
@@ -74,7 +96,7 @@ def get_instagram_followers():
 
 def get_tiktok_followers():
     print("Fetching TikTok followers via RapidAPI...")
-    url = "https://tiktok-scraper7.p.rapidapi.com/user/detail"
+    url = "https://tiktok-scraper7.p.rapidapi.com/user/info"
     headers = {
         "x-rapidapi-key": RAPIDAPI_KEY,
         "x-rapidapi-host": "tiktok-scraper7.p.rapidapi.com"
@@ -127,8 +149,10 @@ def get_facebook_followers():
         if r.status_code == 200:
             data = r.json()
             count = None
+            if isinstance(data, list) and len(data) > 0:
+                data = data[0]
             if isinstance(data, dict):
-                d = data.get("data", {})
+                d = data.get("data", {}) if "data" in data else data
                 if isinstance(d, dict):
                     count = d.get("followers") or d.get("followers_count") or d.get("likes") or d.get("likes_count")
             if count is None:
@@ -273,6 +297,107 @@ def main():
         f.write("export const qm_data = " + json.dumps(data, indent=2, ensure_ascii=False) + ";\n")
         
     print("src/data.js updated successfully!")
+
+    # Generate dynamic Claude AI analysis
+    generate_ai_analysis(data["history"], data["goals"])
+
+def generate_ai_analysis(history, goals):
+    print("Generating AI analysis via Claude...")
+    anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not anthropic_key:
+        print("ANTHROPIC_API_KEY not found. Skipping AI analysis.")
+        return
+
+    url = "https://api.anthropic.com/v1/messages"
+    headers = {
+        "x-api-key": anthropic_key,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+    }
+    
+    prompt = f"""
+    Eres un analista de redes sociales experto para la agencia de noticias Quadratín Morelos.
+    Analiza el historial de métricas reciente de seguidores y los objetivos (goals) de la campaña para generar un resumen de avances dinámico (Logros, Accionables y Dependencias).
+
+    Historial de métricas (últimas entradas):
+    {json.dumps(history[-3:], indent=2)}
+
+    Objetivos de seguidores a alcanzar:
+    {json.dumps(goals, indent=2)}
+
+    Por favor, genera un análisis dinámico en español profesional. Devuelve exclusivamente un objeto JSON válido (sin explicaciones, sin bloques de código Markdown como ```json, solo el JSON puro) con la siguiente estructura:
+    {{
+      "redes": {{
+        "title": "Avance Operativo - Redes Sociales (Análisis de IA)",
+        "is_dynamic": true,
+        "logros": [
+          "logro 1 (analiza el crecimiento de seguidores y qué metas se están logrando, menciona números concretos de crecimiento si es posible)",
+          "logro 2",
+          "logro 3"
+        ],
+        "accionables": [
+          "accionable 1 (tareas o enfoques para la próxima semana basados en el rendimiento)",
+          "accionable 2",
+          "accionable 3"
+        ],
+        "dependencias": [
+          "dependencia 1 (notas sobre el avance general, dependencias operativas o advertencias sobre metas lejanas)",
+          "dependencia 2"
+        ]
+      }}
+    }}
+    """
+
+    payload = {
+        "model": "claude-3-5-sonnet-20241022",
+        "max_tokens": 1500,
+        "messages": [
+            {"role": "user", "content": prompt}
+        ]
+    }
+
+    try:
+        r = requests.post(url, headers=headers, json=payload, timeout=30)
+        if r.status_code == 200:
+            res_data = r.json()
+            content = res_data.get("content", [])[0].get("text", "").strip()
+            
+            if content.startswith("```json"):
+                content = content[7:]
+            if content.endswith("```"):
+                content = content[:-3]
+            content = content.strip()
+
+            analysis_json = json.loads(content)
+            
+            analysis_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src", "analysis.js")
+            
+            radar_default = {
+                "title": "Avance Operativo - Radar Analytics",
+                "logros": [
+                    "Se llevó a cabo la reunión con el equipo de Laboratorio para discutir la metodología, las metas y el flujo de trabajo necesario."
+                ],
+                "accionables": [
+                    "El equipo de Laboratorio se comprometió a enviar un resumen de las herramientas funcionales para automatización.",
+                    "Se tocará base de los avances el miércoles 6 de mayo (se requiere reagendar)."
+                ],
+                "dependencias": [
+                    "Definir si será necesario adquirir la clasificación de medios por Tier 1."
+                ]
+            }
+            
+            full_analysis = {
+                "redes": analysis_json.get("redes", {}),
+                "radar": radar_default
+            }
+            
+            with open(analysis_file, "w", encoding="utf-8") as f:
+                f.write("export const qm_analysis = " + json.dumps(full_analysis, indent=2, ensure_ascii=False) + ";\n")
+            print("AI analysis generated and src/analysis.js updated successfully!")
+        else:
+            print(f"Claude API Error {r.status_code}: {r.text}")
+    except Exception as e:
+        print(f"Claude API Exception: {e}")
 
 if __name__ == "__main__":
     main()
