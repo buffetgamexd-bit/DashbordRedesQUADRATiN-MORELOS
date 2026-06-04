@@ -480,91 +480,93 @@ function App() {
 
         </section>
 
-        {/* 3. Avance Operativo y Planificación (Solo Lectura) */}
-        <section className="mb-10">
-          <div className="flex items-center justify-between mb-4 border-b border-slate-200 pb-3">
-            <h2 className="text-lg font-bold font-outfit text-[#003366] flex items-center gap-2">
-              <span className="w-1.5 h-6 bg-[#ff6600] rounded-full inline-block"></span>
-              {activeNotes.title}
-            </h2>
-            <span className="text-xs font-bold bg-[#e6f0fa] text-[#003366] px-3 py-1 rounded-full uppercase tracking-wider">
-              {activeNotes.is_dynamic ? 'Generado con IA (Claude)' : 'Datos Estáticos del PDF'}
-            </span>
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* 3. Avance Operativo y Planificación (Oculto temporalmente) */}
+        {false && (
+          <section className="mb-10">
+            <div className="flex items-center justify-between mb-4 border-b border-slate-200 pb-3">
+              <h2 className="text-lg font-bold font-outfit text-[#003366] flex items-center gap-2">
+                <span className="w-1.5 h-6 bg-[#ff6600] rounded-full inline-block"></span>
+                {activeNotes.title}
+              </h2>
+              <span className="text-xs font-bold bg-[#e6f0fa] text-[#003366] px-3 py-1 rounded-full uppercase tracking-wider">
+                {activeNotes.is_dynamic ? 'Generado con IA (Claude)' : 'Datos Estáticos del PDF'}
+              </span>
+            </div>
             
-            {/* Column 1: Logros */}
-            <div className="corp-card">
-              <div className="w-full">
-                <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
-                  <h3 className="font-bold font-outfit text-slate-700 flex items-center gap-1.5 text-sm">
-                    <span className="text-emerald-500">🏆</span> Logros de la Semana
-                  </h3>
-                  <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-100">
-                    {activeNotes.logros.length} ítems
-                  </span>
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              
+              {/* Column 1: Logros */}
+              <div className="corp-card">
+                <div className="w-full">
+                  <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+                    <h3 className="font-bold font-outfit text-slate-700 flex items-center gap-1.5 text-sm">
+                      <span className="text-emerald-500">🏆</span> Logros de la Semana
+                    </h3>
+                    <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-100">
+                      {activeNotes.logros.length} ítems
+                    </span>
+                  </div>
 
-                <div className="space-y-1">
-                  {activeNotes.logros.map((text, idx) => (
-                    <div key={idx} className="op-list-item">
-                      <span className="text-emerald-500 op-bullet">✓</span>
-                      <span className="op-text">{text}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Column 2: Accionables */}
-            <div className="corp-card">
-              <div className="w-full">
-                <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
-                  <h3 className="font-bold font-outfit text-slate-700 flex items-center gap-1.5 text-sm">
-                    <span className="text-amber-500">⚡</span> Accionables Próxima Semana
-                  </h3>
-                  <span className="text-[10px] font-bold bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full border border-amber-100">
-                    {activeNotes.accionables.length} ítems
-                  </span>
-                </div>
-
-                <div className="space-y-1">
-                  {activeNotes.accionables.map((text, idx) => (
-                    <div key={idx} className="op-list-item">
-                      <span className="text-amber-500 op-bullet">▶</span>
-                      <span className="op-text">{text}</span>
-                    </div>
-                  ))}
+                  <div className="space-y-1">
+                    {activeNotes.logros.map((text, idx) => (
+                      <div key={idx} className="op-list-item">
+                        <span className="text-emerald-500 op-bullet">✓</span>
+                        <span className="op-text">{text}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Column 3: Dependencias */}
-            <div className="corp-card">
-              <div className="w-full">
-                <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
-                  <h3 className="font-bold font-outfit text-slate-700 flex items-center gap-1.5 text-sm">
-                    <span className="text-[#003366]">📌</span> Dependencias y Notas
-                  </h3>
-                  <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100">
-                    {activeNotes.dependencias.length} ítems
-                  </span>
-                </div>
+              {/* Column 2: Accionables */}
+              <div className="corp-card">
+                <div className="w-full">
+                  <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+                    <h3 className="font-bold font-outfit text-slate-700 flex items-center gap-1.5 text-sm">
+                      <span className="text-amber-500">⚡</span> Accionables Próxima Semana
+                    </h3>
+                    <span className="text-[10px] font-bold bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full border border-amber-100">
+                      {activeNotes.accionables.length} ítems
+                    </span>
+                  </div>
 
-                <div className="space-y-1">
-                  {activeNotes.dependencias.map((text, idx) => (
-                    <div key={idx} className="op-list-item">
-                      <span className="text-[#003366] op-bullet">•</span>
-                      <span className="op-text">{text}</span>
-                    </div>
-                  ))}
+                  <div className="space-y-1">
+                    {activeNotes.accionables.map((text, idx) => (
+                      <div key={idx} className="op-list-item">
+                        <span className="text-amber-500 op-bullet">▶</span>
+                        <span className="op-text">{text}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
 
-          </div>
-        </section>
+              {/* Column 3: Dependencias */}
+              <div className="corp-card">
+                <div className="w-full">
+                  <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+                    <h3 className="font-bold font-outfit text-slate-700 flex items-center gap-1.5 text-sm">
+                      <span className="text-[#003366]">📌</span> Dependencias y Notas
+                    </h3>
+                    <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100">
+                      {activeNotes.dependencias.length} ítems
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    {activeNotes.dependencias.map((text, idx) => (
+                      <div key={idx} className="op-list-item">
+                        <span className="text-[#003366] op-bullet">•</span>
+                        <span className="op-text">{text}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </section>
+        )}
 
         {/* Footer */}
         <footer className="mt-16 border-t border-slate-200 pt-8 text-center text-slate-400 text-xs">
