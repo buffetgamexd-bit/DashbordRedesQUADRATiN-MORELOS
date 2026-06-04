@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { qm_data } from './data';
 import { qm_analysis } from './analysis';
+import { supabase } from './supabase';
 import {
   AreaChart,
   Area,
@@ -188,7 +189,7 @@ function App() {
             className={`header-nav-tab ${activeReportTab === 'radar' ? 'active' : ''}`}
             onClick={() => setActiveReportTab('radar')}
           >
-            Radar Analytics
+            Dependencias
           </button>
         </div>
       </header>
@@ -196,7 +197,9 @@ function App() {
       {/* Main Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         
-        {/* Metadata section (Sub-header) */}
+        {activeReportTab === 'redes' ? (
+          <>
+            {/* Metadata section (Sub-header) */}
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
           <div>
             <h1 className="text-2xl font-bold font-outfit text-[#003366]">
@@ -567,6 +570,10 @@ function App() {
             </div>
           </section>
         )}
+          </>
+        ) : (
+          <DependenciasDashboard />
+        )}
 
         {/* Footer */}
         <footer className="mt-16 border-t border-slate-200 pt-8 text-center text-slate-400 text-xs">
@@ -580,6 +587,224 @@ function App() {
           </p>
         </footer>
 
+      </div>
+    </div>
+  );
+}
+
+function DependenciasDashboard() {
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [adding, setAdding] = useState(false);
+
+  // Fetch tasks on mount
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const fetchTasks = async () => {
+    setLoading(true);
+    const data = await supabase.getTasks();
+    setTasks(data);
+    setLoading(false);
+  };
+
+  const handleAddTask = async (e) => {
+    e.preventDefault();
+    if (!newTaskTitle.trim()) return;
+    setAdding(true);
+    const newTask = await supabase.addTask(newTaskTitle.trim());
+    if (newTask) {
+      // Put the new task at the top
+      setTasks(prev => [newTask, ...prev]);
+      setNewTaskTitle('');
+    }
+    setAdding(false);
+  };
+
+  const handleCompleteTask = async (id) => {
+    const updated = await supabase.completeTask(id);
+    if (updated) {
+      setTasks(prev => prev.map(t => t.id === id ? updated : t));
+    }
+  };
+
+  const handleDeleteTask = async (id) => {
+    const success = await supabase.deleteTask(id);
+    if (success) {
+      setTasks(prev => prev.filter(t => t.id !== id));
+    }
+  };
+
+  // Helper to format time elapsed
+  const getElapsedTime = (dateStr) => {
+    const createdDate = new Date(dateStr);
+    const nowDate = new Date();
+    const diffMs = nowDate - createdDate;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'Hace unos segundos';
+    if (diffMins < 60) return `Hace ${diffMins} ${diffMins === 1 ? 'minuto' : 'minutos'}`;
+    if (diffHours < 24) return `Hace ${diffHours} ${diffHours === 1 ? 'hora' : 'horas'}`;
+    return `Ya pasaron ${diffDays} ${diffDays === 1 ? 'día' : 'días'}`;
+  };
+
+  // Filter tasks
+  const pendingTasks = tasks.filter(t => t.status === 'pending');
+  const completedTasks = tasks.filter(t => t.status === 'completed');
+
+  // Find the oldest pending task
+  const oldestPendingTask = pendingTasks.reduce((oldest, current) => {
+    if (!oldest) return current;
+    return new Date(current.created_at) < new Date(oldest.created_at) ? current : oldest;
+  }, null);
+
+  return (
+    <div className="space-y-8">
+      {/* Header and Add Task */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 pb-5">
+        <div>
+          <h1 className="text-2xl font-bold font-outfit text-[#003366] flex items-center gap-2">
+            <span className="text-red-500">⚠️</span> DEPENDENCIAS — EQUIPO DIRECCIÓN GENERAL
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">
+            Dashboard de control de procesos, aprobaciones y tareas pendientes.
+          </p>
+        </div>
+      </div>
+
+      {/* Alerta de Tarea Pendiente más antigua */}
+      {oldestPendingTask && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-800 flex items-start gap-3 shadow-sm">
+          <span className="text-xl">⚠️</span>
+          <div>
+            <h4 className="font-bold text-sm">Alerta de Proceso en Espera</h4>
+            <p className="text-xs mt-0.5">
+              La tarea más antigua registrada ("<strong>{oldestPendingTask.title}</strong>") sigue pendiente. 
+              <strong> {getElapsedTime(oldestPendingTask.created_at)}</strong> desde que se inició.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Formulario de Agregar Tarea */}
+      <div className="corp-card p-5">
+        <form onSubmit={handleAddTask} className="flex gap-3">
+          <input
+            type="text"
+            placeholder="Escribe una nueva dependencia o tarea de Dirección..."
+            value={newTaskTitle}
+            onChange={(e) => setNewTaskTitle(e.target.value)}
+            disabled={adding}
+            className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-slate-700 bg-white placeholder-slate-400 focus:outline-none focus:border-[#ff6600] text-sm"
+          />
+          <button
+            type="submit"
+            disabled={adding || !newTaskTitle.trim()}
+            className="px-6 py-2.5 bg-[#ff6600] text-white font-bold rounded-lg hover:bg-orange-600 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+          >
+            {adding ? 'Guardando...' : 'Agregar Proceso'}
+          </button>
+        </form>
+      </div>
+
+      {/* Grid de tareas */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Columna de Pendientes */}
+        <div className="lg:col-span-2 space-y-4">
+          <h3 className="font-bold font-outfit text-slate-700 flex items-center justify-between pb-2 border-b border-slate-200 text-sm">
+            <span>📋 Pendientes de Aprobación / Proceso</span>
+            <span className="text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full border border-red-100 font-bold">
+              {pendingTasks.length} tareas
+            </span>
+          </h3>
+
+          {loading ? (
+            <div className="text-center py-10 text-slate-400 text-sm">Cargando tareas desde Supabase...</div>
+          ) : pendingTasks.length === 0 ? (
+            <div className="text-center py-10 text-slate-400 text-sm bg-white border border-slate-100 rounded-xl">
+              🎉 ¡No hay dependencias pendientes! Todo marcha al día.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {pendingTasks.map((task, index) => {
+                const numberStr = String(index + 1).padStart(2, '0');
+                return (
+                  <div key={task.id} className="flex border border-red-100 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
+                    {/* Número con fondo rojo/naranja al estilo del PDF */}
+                    <div className="w-12 bg-red-800 text-white flex items-center justify-center font-bold text-lg font-outfit shrink-0">
+                      {numberStr}
+                    </div>
+                    {/* Contenido */}
+                    <div className="flex-1 p-4 flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-slate-800 text-sm font-medium">{task.title}</p>
+                        <p className="text-xs text-red-500 font-semibold mt-1 flex items-center gap-1">
+                          ⏱️ {getElapsedTime(task.created_at)}
+                        </p>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => handleCompleteTask(task.id)}
+                          className="px-3 py-1.5 bg-emerald-50 text-emerald-600 border border-emerald-250 text-xs font-bold rounded-lg hover:bg-emerald-100 transition-colors"
+                        >
+                          Completar
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTask(task.id)}
+                          className="px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 text-xs font-bold rounded-lg hover:bg-red-100 transition-colors"
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Columna de Completadas */}
+        <div className="space-y-4">
+          <h3 className="font-bold font-outfit text-slate-700 flex items-center justify-between pb-2 border-b border-slate-200 text-sm">
+            <span>✅ Completadas recientemente</span>
+            <span className="text-xs bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-100 font-bold">
+              {completedTasks.length} tareas
+            </span>
+          </h3>
+
+          {loading ? (
+            <div className="text-center py-10 text-slate-400 text-sm">Cargando...</div>
+          ) : completedTasks.length === 0 ? (
+            <div className="text-center py-10 text-slate-400 text-sm bg-white border border-slate-100 rounded-xl">
+              No hay tareas completadas todavía.
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+              {completedTasks.map((task) => (
+                <div key={task.id} className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-3 opacity-75">
+                  <div className="min-w-0">
+                    <p className="text-slate-500 text-sm line-through truncate">{task.title}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      Completada el {new Date(task.completed_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteTask(task.id)}
+                    className="p-1 bg-red-50 text-red-600 border border-red-150 rounded-lg hover:bg-red-100 transition-colors text-xs"
+                    title="Eliminar registro"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
