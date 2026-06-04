@@ -169,10 +169,6 @@ function App() {
       
       {/* 1. Header Oficial de Quadratín Morelos */}
       <header className="w-full">
-        {/* Franja Superior Naranja */}
-        <div className="header-top-bar">
-          {getHeaderDate(lastEntry.date)}
-        </div>
         
         {/* Sección Central Blanca con Logo */}
         <div className="header-main-logo">
