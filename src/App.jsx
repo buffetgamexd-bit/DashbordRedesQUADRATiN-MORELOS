@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { qm_data } from './data';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   AreaChart,
   Area,
@@ -16,214 +15,92 @@ import {
   Target,
   Award,
   Calendar,
-  Plus,
-  Trash2,
-  CheckCircle,
-  AlertCircle,
-  HelpCircle,
   Clock,
   ExternalLink,
-  ChevronRight,
-  Sparkles,
-  BookOpen,
-  CornerDownRight
+  ChevronRight
 } from 'lucide-react';
 
-// Custom SVGs for Social Media Logos to ensure premium branded appearance
-const InstagramIcon = ({ className }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+// Official, highly recognizable brand logo components
+const InstagramLogo = ({ className }) => (
+  <svg viewBox="0 0 24 24" className={className} style={{ width: '28px', height: '28px' }}>
+    <defs>
+      <radialGradient id="igGradient" cx="30%" cy="107%" r="130%">
+        <stop offset="0%" stopColor="#fdf497" />
+        <stop offset="5%" stopColor="#fdf497" />
+        <stop offset="45%" stopColor="#fd5949" />
+        <stop offset="60%" stopColor="#d6249f" />
+        <stop offset="90%" stopColor="#285AEB" />
+      </radialGradient>
+    </defs>
+    <rect width="24" height="24" rx="5" fill="url(#igGradient)" />
+    <path d="M12 7a5 5 0 100 10 5 5 0 000-10zm0 8.25A3.25 3.25 0 1112 8.75a3.25 3.25 0 010 6.5zM17.25 7a1.25 1.25 0 11-2.5 0 1.25 1.25 0 012.5 0z" fill="#ffffff" />
+    <path d="M16 3H8C5.24 3 3 5.24 3 8v8c0 2.76 2.24 5 5 5h8c2.76 0 5-2.24 5-5V8c0-2.76-2.24-5-5-5zm3.25 13c0 1.79-1.46 3.25-3.25 3.25H8C6.21 19.25 4.75 17.79 4.75 16V8C4.75 6.21 6.21 4.75 8 4.75h8c1.79 0 3.25 1.46 3.25 3.25v8z" fill="#ffffff" />
   </svg>
 );
 
-const FacebookIcon = ({ className }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+const FacebookLogo = ({ className }) => (
+  <svg viewBox="0 0 24 24" className={className} style={{ width: '28px', height: '28px' }}>
+    <rect width="24" height="24" rx="5" fill="#1877F2" />
+    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" fill="#ffffff" />
   </svg>
 );
 
-const TikTokIcon = ({ className }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+const TikTokLogo = ({ className }) => (
+  <svg viewBox="0 0 24 24" className={className} style={{ width: '28px', height: '28px' }}>
+    <rect width="24" height="24" rx="5" fill="#010101" />
+    <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.02 1.59 4.23.99 1.15 2.33 1.93 3.79 2.19v3.9c-1.57-.02-3.11-.53-4.41-1.42-.49-.34-.94-.74-1.32-1.19v6.84c.05 1.5-.32 3.02-1.13 4.29-.93 1.48-2.45 2.58-4.17 3.01-1.74.45-3.62.24-5.21-.6-1.59-.85-2.82-2.34-3.37-4.08-.58-1.77-.38-3.76.54-5.36C3.96 10 5.48 8.87 7.23 8.39c1.07-.3 2.19-.3 3.25-.01v4.03c-.87-.31-1.84-.19-2.6.33-.87.57-1.39 1.59-1.35 2.62.03.95.53 1.85 1.33 2.37.83.56 1.88.66 2.78.27.9-.36 1.58-1.14 1.83-2.09.11-.47.15-.96.15-1.44V0h.005z" fill="#ffffff" />
   </svg>
 );
 
-const TwitterIcon = ({ className }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M4 4l11.733 16h4.267l-11.733 -16z" />
-    <path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772" />
+const TwitterXLogo = ({ className }) => (
+  <svg viewBox="0 0 24 24" className={className} style={{ width: '28px', height: '28px' }}>
+    <rect width="24" height="24" rx="5" fill="#000000" />
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="#ffffff" />
   </svg>
 );
 
-// 3D Tilt Card Wrapper Component
-const TiltCard = ({ children, className, glowColor }) => {
-  const cardRef = useRef(null);
-  const [rotateX, setRotateX] = useState(0);
-  const [rotateY, setRotateY] = useState(0);
-  const [glowPos, setGlowPos] = useState({ x: 50, y: 50 });
-  const [isHovered, setIsHovered] = useState(false);
-
-  const handleMouseMove = (e) => {
-    if (!cardRef.current) return;
-    const card = cardRef.current;
-    const rect = card.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    
-    // Relative mouse coordinates from card center (-1 to 1)
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    
-    const rX = -((mouseY - height / 2) / (height / 2)) * 8; // Max 8 deg
-    const rY = ((mouseX - width / 2) / (width / 2)) * 8; // Max 8 deg
-    
-    setRotateX(rX);
-    setRotateY(rY);
-    
-    // Glow position in percentages
-    const glowX = (mouseX / width) * 100;
-    const glowY = (mouseY / height) * 100;
-    setGlowPos({ x: glowX, y: glowY });
-  };
-
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-    setRotateX(0);
-    setRotateY(0);
-  };
-
-  return (
-    <div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      style={{
-        transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${isHovered ? 1.02 : 1})`,
-        transition: 'transform 0.15s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.15s ease',
-        transformStyle: 'preserve-3d',
-      }}
-      className={`relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-900/60 backdrop-blur-xl p-6 shadow-2xl ${className}`}
-    >
-      {/* Dynamic spotlight gradient glow inside the card */}
-      <div
-        className="absolute pointer-events-none transition-opacity duration-300"
-        style={{
-          background: `radial-gradient(circle 180px at ${glowPos.x}% ${glowPos.y}%, ${glowColor || 'rgba(255, 120, 0, 0.15)'}, transparent 80%)`,
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          opacity: isHovered ? 1 : 0,
-        }}
-      />
-      
-      {/* 3D content container */}
-      <div style={{ transform: 'translateZ(20px)' }} className="relative z-10 flex flex-col h-full justify-between">
-        {children}
-      </div>
-    </div>
-  );
-};
-
-// Seed notes for fallback
-const SEED_NOTES = {
-  logros: [
-    { id: 'l1', text: 'Se logró superar la meta mensual del OKR de seguidores en Instagram (13.8K+)', category: 'logros' },
-    { id: 'l2', text: 'Aumentamos la frecuencia de publicación de Sofía de 1 a 2 videos diarios', category: 'logros' },
-    { id: 'l3', text: 'Mejoramos significativamente el tiempo de respuesta inicial en comentarios de FB', category: 'logros' },
-    { id: 'l4', text: 'Se lanzó con éxito la dinámica de interacción por el Día de las Madres', category: 'logros' }
-  ],
-  accionables: [
-    { id: 'a1', text: 'Probar contenido diferenciado en TikTok con Sofía y Romina (5 contenidos diarios)', completed: false, category: 'accionables' },
-    { id: 'a2', text: 'Enviar propuesta de pauta semanal para Facebook (2 a 3 contenidos diarios)', completed: true, category: 'accionables' },
-    { id: 'a3', text: 'Pedir cotización formal a la agencia de Reuters para contratación (Jaki)', completed: false, category: 'accionables' },
-    { id: 'a4', text: 'Definir el flujo de aportación de Bigote Chilaquiler a "Raíces Morelos"', completed: false, category: 'accionables' }
-  ],
-  dependencias: [
-    { id: 'd1', text: 'Aprobación de Dirección General (Cerón) del diseño final para estudio Raíces Morelos', category: 'dependencias' },
-    { id: 'd2', text: 'Reagendar la reunión técnica con el equipo de Radar Analytics para evaluar Tier 1', category: 'dependencias' },
-    { id: 'd3', text: 'Definir asignación de presupuesto publicitario semanal para impulsar crecimiento en FB', category: 'dependencias' }
-  ]
+// Static notes mapping directly to the PDF
+const REPORT_NOTES = {
+  redes: {
+    title: "Avance Operativo - Redes Sociales",
+    logros: [
+      "A 7 días de mayo, se logró superar la meta mensual de seguidores en IG (13.8K+).",
+      "Aumentamos la frecuencia de publicación de Sofía de 1 a 2 videos diarios.",
+      "Mejoramos significativamente el tiempo de respuesta inicial en comentarios de FB.",
+      "Se lanzó con éxito la dinámica de interacción por el Día de las Madres."
+    ],
+    accionables: [
+      "Probar contenido diferenciado en TikTok con Sofía y Romina (5 contenidos diarios).",
+      "Enviar propuesta de pauta semanal para Facebook (2 a 3 contenidos diarios).",
+      "Pedir cotización formal a la agencia de Reuters para contratación (Jaki).",
+      "Definir el flujo de aportación de Bigote Chilaquiler a 'Raíces Morelos'."
+    ],
+    dependencias: [
+      "Aprobación de Dirección General (Cerón) del diseño final para estudio Raíces Morelos.",
+      "Esta semana se tendrá un particular enfoque en el crecimiento de TikTok y Facebook.",
+      "Se tuvo que mover la fecha tentativa para entrevista de Raíces Morelos (se programará según el avance del estudio)."
+    ]
+  },
+  radar: {
+    title: "Avance Operativo - Radar Analytics",
+    logros: [
+      "Se llevó a cabo la reunión con el equipo de Laboratorio para discutir la metodología, las metas y el flujo de trabajo necesario."
+    ],
+    accionables: [
+      "El equipo de Laboratorio se comprometió a enviar un resumen de las herramientas funcionales para automatización.",
+      "Se tocará base de los avances el miércoles 6 de mayo (se requiere reagendar)."
+    ],
+    dependencias: [
+      "Definir si será necesario adquirir la clasificación de medios por Tier 1."
+    ]
+  }
 };
 
 function App() {
-  const [selectedTab, setSelectedTab] = useState('consolidado');
-  const [notes, setNotes] = useState(() => {
-    const saved = localStorage.getItem('qm_dashboard_notes');
-    return saved ? JSON.parse(saved) : SEED_NOTES;
-  });
+  const [selectedChartTab, setSelectedChartTab] = useState('consolidado');
+  const [activeReportTab, setActiveReportTab] = useState('redes');
 
-  // Notes state managers
-  const [newNoteTexts, setNewNoteTexts] = useState({ logros: '', accionables: '', dependencias: '' });
-  const [isEditingNote, setIsEditingNote] = useState(null);
-  const [editNoteText, setEditNoteText] = useState('');
-
-  useEffect(() => {
-    localStorage.setItem('qm_dashboard_notes', JSON.stringify(notes));
-  }, [notes]);
-
-  const addNote = (category) => {
-    const text = newNoteTexts[category].trim();
-    if (!text) return;
-    const newNote = {
-      id: `${category}-${Date.now()}`,
-      text,
-      category,
-      ...(category === 'accionables' ? { completed: false } : {})
-    };
-    setNotes(prev => ({
-      ...prev,
-      [category]: [...prev[category], newNote]
-    }));
-    setNewNoteTexts(prev => ({ ...prev, [category]: '' }));
-  };
-
-  const deleteNote = (category, id) => {
-    setNotes(prev => ({
-      ...prev,
-      [category]: prev[category].filter(note => note.id !== id)
-    }));
-  };
-
-  const toggleAccionable = (id) => {
-    setNotes(prev => ({
-      ...prev,
-      accionables: prev.accionables.map(note => 
-        note.id === id ? { ...note, completed: !note.completed } : note
-      )
-    }));
-  };
-
-  const startEditing = (note) => {
-    setIsEditingNote(note.id);
-    setEditNoteText(note.text);
-  };
-
-  const saveEdit = (category, id) => {
-    if (!editNoteText.trim()) return;
-    setNotes(prev => ({
-      ...prev,
-      [category]: prev[category].map(note => 
-        note.id === id ? { ...note, text: editNoteText.trim() } : note
-      )
-    }));
-    setIsEditingNote(null);
-    setEditNoteText('');
-  };
-
-  const cancelEdit = () => {
-    setIsEditingNote(null);
-    setEditNoteText('');
-  };
-
-  // Extract history and configurations
+  // Extract history and configurations from data
   const history = qm_data.history;
   const goals = qm_data.goals;
   
@@ -234,9 +111,8 @@ function App() {
   const platforms = {
     instagram: {
       name: 'Instagram',
-      color: '#ff7a00',
-      glowColor: 'rgba(255, 122, 0, 0.15)',
-      icon: InstagramIcon,
+      color: '#e1306c', // official Instagram branding color
+      logo: InstagramLogo,
       initial: initialEntry.instagram,
       current: lastEntry.instagram,
       goal: goals.instagram,
@@ -244,9 +120,8 @@ function App() {
     },
     tiktok: {
       name: 'TikTok',
-      color: '#00f2fe',
-      glowColor: 'rgba(0, 242, 254, 0.15)',
-      icon: TikTokIcon,
+      color: '#010101', // official black
+      logo: TikTokLogo,
       initial: initialEntry.tiktok,
       current: lastEntry.tiktok,
       goal: goals.tiktok,
@@ -254,24 +129,45 @@ function App() {
     },
     facebook: {
       name: 'Facebook',
-      color: '#1877f2',
-      glowColor: 'rgba(24, 119, 242, 0.15)',
-      icon: FacebookIcon,
+      color: '#1877f2', // official Facebook blue
+      logo: FacebookLogo,
       initial: initialEntry.facebook,
       current: lastEntry.facebook,
       goal: goals.facebook,
-      profileUrl: 'https://www.facebook.com/QuadratinMorelos'
+      profileUrl: 'https://www.facebook.com/share/14iS411Pd47/?mibextid=wwXIfr'
     },
     twitter: {
       name: 'Twitter / X',
-      color: '#ffffff',
-      glowColor: 'rgba(255, 255, 255, 0.1)',
-      icon: TwitterIcon,
+      color: '#000000', // official X black
+      logo: TwitterXLogo,
       initial: initialEntry.twitter,
       current: lastEntry.twitter,
       goal: goals.twitter,
       profileUrl: 'https://x.com/Quadratin_Mor'
     }
+  };
+
+  // Format date helper in Spanish
+  const formatDateSpanish = (dateStr) => {
+    const dateObj = new Date(dateStr + 'T12:00:00'); // avoid timezone offset issues
+    return dateObj.toLocaleDateString('es-MX', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const getHeaderDate = (dateStr) => {
+    const dateObj = new Date(dateStr + 'T12:00:00');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const months = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+    ];
+    const month = months[dateObj.getMonth()];
+    const year = dateObj.getFullYear();
+    return `Cuernavaca, Morelos a ${day} de ${month} de ${year}`;
   };
 
   // Helper formatting functions
@@ -288,7 +184,7 @@ function App() {
 
   // Chart data mapping
   const chartData = history.map(entry => {
-    const dateObj = new Date(entry.date);
+    const dateObj = new Date(entry.date + 'T12:00:00');
     const formattedDate = dateObj.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
     return {
       date: formattedDate,
@@ -301,97 +197,120 @@ function App() {
     };
   });
 
+  const activeNotes = REPORT_NOTES[activeReportTab];
+
   return (
-    <div className="min-h-screen bg-[#0b0f19] text-slate-100 font-sans antialiased overflow-x-hidden relative">
-      {/* Ambient background glows */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-sky-500/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute top-1/3 right-1/4 w-[600px] h-[600px] bg-orange-500/5 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-10 left-10 w-[400px] h-[400px] bg-blue-600/5 rounded-full blur-[100px] pointer-events-none" />
+    <div className="min-h-screen bg-[#f8f9fa] text-slate-100 font-sans antialiased overflow-x-hidden">
+      
+      {/* 1. Header Oficial de Quadratín Morelos */}
+      <header className="w-full">
+        {/* Franja Superior Naranja */}
+        <div className="header-top-bar">
+          {getHeaderDate(lastEntry.date)}
+        </div>
+        
+        {/* Sección Central Blanca con Logo */}
+        <div className="header-main-logo">
+          <img src="/logo_quadratin.png" alt="Logo Quadratín Morelos" />
+        </div>
+        
+        {/* Barra de Navegación Azul Marino */}
+        <div className="header-nav-bar">
+          <span className="header-nav-title">Reporte de Avances</span>
+          <button 
+            className={`header-nav-tab ${activeReportTab === 'redes' ? 'active' : ''}`}
+            onClick={() => setActiveReportTab('redes')}
+          >
+            Redes Sociales
+          </button>
+          <button 
+            className={`header-nav-tab ${activeReportTab === 'radar' ? 'active' : ''}`}
+            onClick={() => setActiveReportTab('radar')}
+          >
+            Radar Analytics
+          </button>
+        </div>
+      </header>
 
       {/* Main Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         
-        {/* Header Section */}
-        <header className="mb-10 flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-800/80 pb-8">
+        {/* Metadata section (Sub-header) */}
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <span className="px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20 flex items-center gap-1.5">
-                <Sparkles size={12} className="animate-pulse" /> OKR Q2 2026
-              </span>
-              <span className="px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center gap-1">
-                <Clock size={12} /> Auto-Scraper 7:00 AM
-              </span>
-            </div>
-            <h1 className="text-4xl font-extrabold tracking-tight font-outfit bg-gradient-to-r from-orange-400 via-amber-200 to-sky-400 bg-clip-text text-transparent">
-              Quadratín Morelos
+            <h1 className="text-2xl font-bold font-outfit text-[#003366]">
+              Dashboard de Métricas
             </h1>
-            <p className="text-slate-400 text-lg mt-1 font-light">
-              Métricas de crecimiento y cumplimiento de objetivos de redes sociales.
+            <p className="text-slate-500 text-sm mt-0.5">
+              Campaña Q2 2026 · Resumen ejecutivo y cumplimiento de objetivos.
             </p>
           </div>
-          
-          <div className="mt-6 md:mt-0 flex flex-col items-end bg-slate-900/50 border border-slate-800 rounded-xl p-4 backdrop-blur-md">
-            <div className="text-xs text-slate-500 uppercase tracking-widest font-mono">Última actualización</div>
-            <div className="text-lg font-bold text-slate-200 mt-1 flex items-center gap-2">
-              <Calendar size={18} className="text-orange-400" />
-              {new Date(lastEntry.date).toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </div>
-            {lastEntry.failed_scrapes && lastEntry.failed_scrapes.length > 0 && (
-              <div className="text-xs text-yellow-400/90 mt-1 flex items-center gap-1 bg-yellow-500/10 border border-yellow-500/20 px-2 py-0.5 rounded">
-                <AlertCircle size={12} /> Falló scrape en: {lastEntry.failed_scrapes.join(', ')} (usando backup)
-              </div>
-            )}
+          <div className="flex flex-col items-start sm:items-end">
+            <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Último Scrape Automatizado</span>
+            <span className="text-sm font-bold text-[#003366] flex items-center gap-1.5 mt-0.5">
+              <Clock size={15} className="text-[#ff6600]" />
+              {formatDateSpanish(lastEntry.date)} (7:00 AM)
+            </span>
           </div>
-        </header>
+        </div>
 
         {/* Totals Section */}
         <section className="mb-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-gradient-to-br from-slate-900/70 to-slate-950/70 border border-slate-800 rounded-2xl p-6 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/10 rounded-bl-full blur-xl transition-all group-hover:scale-125" />
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Audiencia Consolidada</span>
-            <div className="text-3xl font-extrabold text-white font-outfit">{formatNumber(currentTotal)}</div>
-            <div className="text-sm text-slate-400 mt-2 flex items-center gap-1.5">
-              <span className="text-orange-400 font-semibold flex items-center">
+          
+          <div className="corp-card">
+            <div>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Audiencia Consolidada</span>
+              <div className="text-3xl font-extrabold text-[#003366] font-outfit">{formatNumber(currentTotal)}</div>
+            </div>
+            <div className="text-xs text-slate-500 mt-4 flex items-center gap-1">
+              <span className="text-[#ff6600] font-bold flex items-center">
                 <TrendingUp size={14} className="mr-0.5" /> {formatPercentage(totalGrowthPercentage)}
               </span>
               desde el 9 de enero ({formatNumber(initialTotal)})
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-slate-900/70 to-slate-950/70 border border-slate-800 rounded-2xl p-6 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-sky-500/10 rounded-bl-full blur-xl transition-all group-hover:scale-125" />
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Crecimiento Neto Total</span>
-            <div className="text-3xl font-extrabold text-white font-outfit">+{formatNumber(totalGrowth)}</div>
-            <div className="text-sm text-slate-400 mt-2">
-              Seguidores ganados en el período Q2
+          <div className="corp-card">
+            <div>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Crecimiento Neto</span>
+              <div className="text-3xl font-extrabold text-[#003366] font-outfit">+{formatNumber(totalGrowth)}</div>
+            </div>
+            <div className="text-xs text-slate-500 mt-4">
+              Seguidores totales ganados en la campaña
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-slate-900/70 to-slate-950/70 border border-slate-800 rounded-2xl p-6 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-bl-full blur-xl transition-all group-hover:scale-125" />
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Progreso vs Meta Global</span>
-            <div className="flex items-center justify-between mb-2 mt-1">
-              <span className="text-2xl font-extrabold text-white font-outfit">{totalProgress.toFixed(1)}%</span>
-              <span className="text-xs font-mono text-slate-400">{formatNumber(currentTotal)} / {formatNumber(totalGoal)}</span>
-            </div>
-            {/* Custom progress bar */}
-            <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-orange-500 to-sky-500 transition-all duration-1000"
-                style={{ width: `${Math.min(totalProgress, 100)}%` }}
-              />
+          <div className="corp-card">
+            <div>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Progreso vs Meta Global</span>
+              <div className="flex items-center justify-between mb-2 mt-1">
+                <span className="text-xl font-extrabold text-[#003366] font-outfit">{totalProgress.toFixed(1)}%</span>
+                <span className="text-xs font-mono text-slate-500">{formatNumber(currentTotal)} / {formatNumber(totalGoal)}</span>
+              </div>
+              <div className="progress-bar-container">
+                <div 
+                  className="h-full transition-all duration-1000"
+                  style={{ 
+                    width: `${Math.min(totalProgress, 100)}%`,
+                    backgroundColor: 'var(--color-orange)'
+                  }}
+                />
+              </div>
             </div>
           </div>
+
         </section>
 
-        {/* Platform Grid (3D tilt cards) */}
+        {/* Platform Grid */}
         <section className="mb-10">
-          <h2 className="text-xl font-bold font-outfit text-slate-200 mb-6 flex items-center gap-2">
-            <Sparkles size={20} className="text-orange-400" /> Rendimiento por Plataforma
+          <h2 className="text-lg font-bold font-outfit text-[#003366] mb-4 flex items-center gap-2">
+            <span className="w-1.5 h-6 bg-[#ff6600] rounded-full inline-block"></span>
+            Rendimiento por Plataforma
           </h2>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {Object.entries(platforms).map(([key, item]) => {
-              const Icon = item.icon;
+              const Logo = item.logo;
               const netGrowth = item.current - item.initial;
               const netGrowthPct = (netGrowth / item.initial) * 100;
               const progressPct = (item.current / item.goal) * 100;
@@ -399,124 +318,120 @@ function App() {
               const isGoalMet = item.current >= item.goal;
 
               return (
-                <TiltCard key={key} glowColor={item.glowColor} className="h-full">
+                <div key={key} className="corp-card">
                   <div>
                     {/* Header */}
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="p-3 rounded-xl bg-slate-850 border border-slate-800 text-slate-300" style={{ color: item.color }}>
-                        <Icon className="w-6 h-6" />
-                      </div>
+                    <div className="flex justify-between items-start mb-3">
+                      <Logo />
                       <a 
                         href={item.profileUrl} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="text-slate-500 hover:text-slate-300 transition-colors p-1"
+                        className="text-slate-400 hover:text-[#003366] transition-colors p-1"
                         title="Ver perfil oficial"
                       >
-                        <ExternalLink size={16} />
+                        <ExternalLink size={15} />
                       </a>
                     </div>
 
                     {/* Title & Count */}
                     <div>
-                      <h3 className="text-lg font-bold font-outfit text-slate-300">{item.name}</h3>
-                      <div className="text-3xl font-extrabold text-white mt-1 font-outfit tracking-tight">
+                      <h3 className="text-sm font-bold font-outfit text-slate-500">{item.name}</h3>
+                      <div className="text-2xl font-extrabold text-[#003366] mt-0.5 font-outfit tracking-tight">
                         {formatNumber(item.current)}
                       </div>
-                      <div className="text-xs text-slate-500 mt-0.5">seguidores actuales</div>
+                      <div className="text-[11px] text-slate-400">seguidores actuales</div>
                     </div>
                   </div>
 
                   {/* Calculations */}
-                  <div className="mt-6 space-y-4 pt-4 border-t border-slate-800/60">
-                    {/* Net growth details */}
-                    <div className="flex justify-between items-center text-sm">
+                  <div className="mt-4 space-y-3 pt-3 border-t border-slate-100">
+                    <div className="flex justify-between items-center text-xs">
                       <span className="text-slate-400">Crecimiento Neto:</span>
-                      <span className="font-semibold flex items-center gap-1" style={{ color: netGrowth >= 0 ? '#4ade80' : '#ef4444' }}>
-                        {netGrowth >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                      <span className="font-bold flex items-center gap-0.5" style={{ color: netGrowth >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                        {netGrowth >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                         {formatNumber(netGrowth)} ({formatPercentage(netGrowthPct)})
                       </span>
                     </div>
 
                     {/* Meta progress */}
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-slate-400 flex items-center gap-1"><Target size={12} /> Meta: {formatNumber(item.goal)}</span>
-                        <span className="font-mono font-semibold" style={{ color: isGoalMet ? '#4ade80' : item.color }}>
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="text-slate-400 flex items-center gap-0.5"><Target size={11} /> Meta: {formatNumber(item.goal)}</span>
+                        <span className="font-bold" style={{ color: isGoalMet ? 'var(--color-success)' : 'var(--color-blue)' }}>
                           {progressPct.toFixed(1)}%
                         </span>
                       </div>
                       
                       {/* Bar */}
-                      <div className="w-full bg-slate-850 h-1.5 rounded-full overflow-hidden border border-slate-800/40">
+                      <div className="progress-bar-container">
                         <div 
                           className="h-full transition-all duration-1000"
                           style={{ 
                             width: `${Math.min(progressPct, 100)}%`,
-                            backgroundColor: isGoalMet ? '#4ade80' : item.color
+                            backgroundColor: isGoalMet ? 'var(--color-success)' : 'var(--color-blue)'
                           }}
                         />
                       </div>
 
                       {/* Remaining indicator */}
-                      <div className="text-right">
+                      <div className="text-right mt-1">
                         {isGoalMet ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-400 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20">
-                            <Award size={10} /> ¡Meta Superada!
+                          <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold text-emerald-650 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-250">
+                            <Award size={9} /> Meta Superada
                           </span>
                         ) : (
-                          <span className="text-[11px] text-slate-500">
-                            Faltan <strong className="text-slate-300 font-semibold">{formatNumber(remaining)}</strong>
+                          <span className="text-[10px] text-slate-400">
+                            Faltan <strong className="text-slate-600 font-semibold">{formatNumber(remaining)}</strong>
                           </span>
                         )}
                       </div>
                     </div>
 
                     {/* Historical Baseline comparisons */}
-                    <div className="bg-slate-950/40 border border-slate-800/60 rounded-lg p-2.5 space-y-1 text-xs">
+                    <div className="bg-[#f8f9fa] border border-[#e5e7eb] rounded-lg p-2 space-y-0.5 text-[10px]">
                       <div className="flex justify-between">
-                        <span className="text-slate-500">Inicio (9 Ene):</span>
-                        <span className="text-slate-300 font-semibold">{formatNumber(item.initial)}</span>
+                        <span className="text-slate-400">Inicio (9 Ene):</span>
+                        <span className="text-slate-700 font-bold">{formatNumber(item.initial)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-500">Cierre PDF (9 May):</span>
-                        <span className="text-slate-300 font-semibold">
+                        <span className="text-slate-400">Cierre PDF (9 May):</span>
+                        <span className="text-slate-700 font-bold">
                           {formatNumber(history[1] ? history[1][key] : item.initial)}
                         </span>
                       </div>
                     </div>
                   </div>
-                </TiltCard>
+                </div>
               );
             })}
           </div>
         </section>
 
-        {/* Charts & Interactive Analysis */}
+        {/* Charts & Pipeline Info */}
         <section className="mb-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* Main Chart Card (span 2) */}
-          <div className="lg:col-span-2 bg-slate-900/40 border border-slate-800 rounded-2xl p-6 backdrop-blur-md flex flex-col justify-between">
+          <div className="lg:col-span-2 corp-card">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
               <div>
-                <h2 className="text-xl font-bold font-outfit text-slate-200">Histórico de Crecimiento</h2>
-                <p className="text-slate-400 text-xs mt-0.5">Evolución de seguidores desde el inicio de la campaña.</p>
+                <h2 className="text-lg font-bold font-outfit text-[#003366]">Histórico de Crecimiento</h2>
+                <p className="text-slate-400 text-xs mt-0.5">Evolución de seguidores registrados.</p>
               </div>
               
               {/* Tab Selector */}
-              <div className="flex flex-wrap gap-1 bg-slate-950/60 border border-slate-800 p-1 rounded-xl self-start sm:self-center">
+              <div className="sub-tabs-container">
                 <button 
-                  onClick={() => setSelectedTab('consolidado')}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${selectedTab === 'consolidado' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'text-slate-400 hover:text-slate-200'}`}
+                  onClick={() => setSelectedChartTab('consolidado')}
+                  className={`sub-tab-btn ${selectedChartTab === 'consolidado' ? 'active' : ''}`}
                 >
                   Consolidado
                 </button>
                 {Object.entries(platforms).map(([key, item]) => (
                   <button 
                     key={key}
-                    onClick={() => setSelectedTab(key)}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${selectedTab === key ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}
-                    style={{ backgroundColor: selectedTab === key ? item.color : undefined }}
+                    onClick={() => setSelectedChartTab(key)}
+                    className={`sub-tab-btn ${selectedChartTab === key ? 'active' : ''}`}
                   >
                     {item.name}
                   </button>
@@ -535,28 +450,28 @@ function App() {
                     <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop 
                         offset="5%" 
-                        stopColor={selectedTab === 'consolidado' ? '#ff7a00' : platforms[selectedTab].color} 
-                        stopOpacity={0.4} 
+                        stopColor={selectedChartTab === 'consolidado' ? '#ff6600' : platforms[selectedChartTab].color} 
+                        stopOpacity={0.2} 
                       />
                       <stop 
                         offset="95%" 
-                        stopColor={selectedTab === 'consolidado' ? '#ff7a00' : platforms[selectedTab].color} 
+                        stopColor={selectedChartTab === 'consolidado' ? '#ff6600' : platforms[selectedChartTab].color} 
                         stopOpacity={0} 
                       />
                     </linearGradient>
                   </defs>
                   
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.3} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   
                   <XAxis 
                     dataKey="date" 
-                    stroke="#64748b" 
+                    stroke="#6b7280" 
                     fontSize={11} 
                     tickLine={false}
                     axisLine={false}
                   />
                   <YAxis 
-                    stroke="#64748b" 
+                    stroke="#6b7280" 
                     fontSize={11} 
                     tickLine={false}
                     axisLine={false}
@@ -565,25 +480,26 @@ function App() {
                   
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: 'rgba(15, 23, 42, 0.9)', 
-                      borderColor: selectedTab === 'consolidado' ? '#ff7a00' : platforms[selectedTab].color,
-                      borderRadius: '12px',
-                      color: '#f8fafc',
+                      backgroundColor: '#ffffff', 
+                      borderColor: selectedChartTab === 'consolidado' ? '#ff6600' : '#003366',
+                      borderRadius: '8px',
+                      color: '#1f2937',
                       fontSize: '13px',
-                      backdropFilter: 'blur(8px)',
-                      boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5)'
+                      boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)'
                     }} 
-                    formatter={(value) => [formatNumber(value), selectedTab === 'consolidado' ? 'Seguidores Totales' : `Seguidores en ${platforms[selectedTab].name}`]}
+                    itemStyle={{ color: '#1f2937' }}
+                    labelStyle={{ color: '#6b7280', fontWeight: 'bold' }}
+                    formatter={(value) => [formatNumber(value), selectedChartTab === 'consolidado' ? 'Seguidores Totales' : `Seguidores en ${platforms[selectedChartTab].name}`]}
                     labelFormatter={(label, items) => {
                       const entry = items[0]?.payload;
-                      return entry ? `Fecha: ${entry.fullDate}` : label;
+                      return entry ? `Fecha de registro: ${entry.fullDate}` : label;
                     }}
                   />
 
                   <Area 
                     type="monotone" 
-                    dataKey={selectedTab === 'consolidado' ? 'total' : selectedTab} 
-                    stroke={selectedTab === 'consolidado' ? '#ff7a00' : platforms[selectedTab].color} 
+                    dataKey={selectedChartTab === 'consolidado' ? 'total' : selectedChartTab} 
+                    stroke={selectedChartTab === 'consolidado' ? '#ff6600' : platforms[selectedChartTab].color} 
                     strokeWidth={3} 
                     fillOpacity={1} 
                     fill="url(#colorGradient)" 
@@ -594,301 +510,143 @@ function App() {
             </div>
             
             {/* Explanatory subtitle */}
-            <div className="mt-4 text-xs text-slate-500 border-t border-slate-800/50 pt-3 flex items-center gap-1.5">
-              <Clock size={12} />
-              Los puntos representan las fechas clave del reporte del PDF (9 Enero, 9 Mayo) y las mediciones automatizadas posteriores.
+            <div className="mt-4 text-xs text-slate-400 border-t border-slate-100 pt-3 flex items-center gap-1.5">
+              <Calendar size={12} className="text-[#003366]" />
+              Los puntos representan las fechas clave del reporte (9 de enero y 9 de mayo) complementados con las mediciones automáticas diarias a las 7:00 AM.
             </div>
           </div>
 
-          {/* Scraper / Pipeline Info Panel */}
-          <div className="bg-gradient-to-br from-slate-900/40 to-slate-950/40 border border-slate-800 rounded-2xl p-6 backdrop-blur-md flex flex-col justify-between">
+          {/* Pipeline Info Panel */}
+          <div className="corp-card flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-xl">
+                <div className="p-2 bg-orange-50 text-[#ff6600] rounded-xl border border-orange-100">
                   <Clock size={20} />
                 </div>
-                <h3 className="text-lg font-bold font-outfit text-slate-200">Automatización Cron</h3>
+                <h3 className="text-md font-bold font-outfit text-[#003366]">Automatización diaria</h3>
               </div>
               
-              <p className="text-slate-400 text-sm leading-relaxed mb-4">
-                El dashboard se actualiza de forma autónoma diariamente a las <strong>7:00 AM (Morelos)</strong> utilizando la infraestructura sin servidor de GitHub Actions + Vercel:
+              <p className="text-slate-500 text-xs leading-relaxed mb-4">
+                Las estadísticas de seguidores se actualizan de forma autónoma diariamente a las <strong>7:00 AM (Morelos)</strong> utilizando la infraestructura de GitHub Actions + Vercel sin costo:
               </p>
 
-              <div className="space-y-3.5 text-xs text-slate-400">
+              <div className="space-y-3 text-[11px] text-slate-500">
                 <div className="flex items-start gap-2.5">
-                  <div className="w-5 h-5 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-mono font-bold text-slate-300 text-[10px] shrink-0 mt-0.5">1</div>
+                  <div className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-600 text-[10px] shrink-0 mt-0.5">1</div>
                   <div>
-                    <strong className="text-slate-200 font-semibold block mb-0.5">Trigger diario (GitHub Actions)</strong>
-                    Se levanta un contenedor Linux headless configurado con Google Chrome.
+                    <strong className="text-slate-700 block">Trigger Cron Diario</strong>
+                    GitHub Actions levanta un contenedor invisible con Chrome cada mañana a las 7:00 AM.
                   </div>
                 </div>
 
                 <div className="flex items-start gap-2.5">
-                  <div className="w-5 h-5 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-mono font-bold text-slate-300 text-[10px] shrink-0 mt-0.5">2</div>
+                  <div className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-600 text-[10px] shrink-0 mt-0.5">2</div>
                   <div>
-                    <strong className="text-slate-200 font-semibold block mb-0.5">Script Extractor (Python)</strong>
-                    Visita las páginas públicas, extrae los seguidores reales y los escribe en <code className="bg-slate-950 text-slate-300 text-[10px] px-1 py-0.5 rounded">src/data.js</code>.
+                    <strong className="text-slate-700 block">Scraper en Python</strong>
+                    Extrae los seguidores reales directo de las URL oficiales y los guarda en <code className="bg-[#f3f4f6] text-[#003366] text-[10px] px-1 py-0.5 rounded font-mono">src/data.js</code>.
                   </div>
                 </div>
 
                 <div className="flex items-start gap-2.5">
-                  <div className="w-5 h-5 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-mono font-bold text-slate-300 text-[10px] shrink-0 mt-0.5">3</div>
+                  <div className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-600 text-[10px] shrink-0 mt-0.5">3</div>
                   <div>
-                    <strong className="text-slate-200 font-semibold block mb-0.5">Despliegue Instantáneo</strong>
-                    Se hace un push automático al repositorio, lo que dispara la compilación y actualización inmediata en Vercel.
+                    <strong className="text-slate-700 block">Despliegue Automático</strong>
+                    El workflow guarda los cambios en GitHub, lo que activa a Vercel para recompilar la web con las nuevas cifras en segundos.
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-slate-800/60 bg-slate-950/20 p-3 rounded-xl border border-slate-900">
-              <span className="text-[11px] text-slate-500 uppercase tracking-widest font-mono block mb-1">Archivos del pipeline:</span>
-              <ul className="space-y-1 font-mono text-[11px] text-slate-400">
-                <li className="flex items-center gap-1"><CornerDownRight size={10} className="text-slate-650" /> <span className="text-orange-400/90">update_stats.py</span> (Scraper Core)</li>
-                <li className="flex items-center gap-1"><CornerDownRight size={10} className="text-slate-650" /> <span className="text-blue-400/90">update_stats.yml</span> (GitHub Workflow)</li>
+            <div className="mt-6 pt-4 border-t border-slate-100 bg-[#f8f9fa] p-3 rounded-lg border border-[#e5e7eb]">
+              <span className="text-[10px] text-slate-400 uppercase tracking-widest font-mono block mb-1">Archivos del sistema:</span>
+              <ul className="space-y-0.5 font-mono text-[10px] text-slate-600">
+                <li className="flex items-center gap-1">▪ <span className="text-[#ff6600]">update_stats.py</span> (Core)</li>
+                <li className="flex items-center gap-1">▪ <span className="text-[#003366]">update_stats.yml</span> (Cron)</li>
               </ul>
             </div>
           </div>
         </section>
 
-        {/* Notes, Tasks, and Dependencies (Interactive) */}
+        {/* 3. Avance Operativo y Planificación (Solo Lectura) */}
         <section className="mb-10">
-          <h2 className="text-xl font-bold font-outfit text-slate-200 mb-6 flex items-center gap-2">
-            <BookOpen size={20} className="text-orange-400" /> Avance Operativo y Planificación
-          </h2>
+          <div className="flex items-center justify-between mb-4 border-b border-slate-200 pb-3">
+            <h2 className="text-lg font-bold font-outfit text-[#003366] flex items-center gap-2">
+              <span className="w-1.5 h-6 bg-[#ff6600] rounded-full inline-block"></span>
+              {activeNotes.title}
+            </h2>
+            <span className="text-xs font-bold bg-[#e6f0fa] text-[#003366] px-3 py-1 rounded-full uppercase tracking-wider">
+              Datos Estáticos del PDF
+            </span>
+          </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             {/* Column 1: Logros */}
-            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 backdrop-blur-md flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
-                  <h3 className="font-bold font-outfit text-slate-200 flex items-center gap-2 text-md">
-                    <span className="text-emerald-400">🏆</span> Logros de la Semana
+            <div className="corp-card">
+              <div className="w-full">
+                <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+                  <h3 className="font-bold font-outfit text-slate-700 flex items-center gap-1.5 text-sm">
+                    <span className="text-emerald-500">🏆</span> Logros de la Semana
                   </h3>
-                  <span className="text-xs font-mono bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">
-                    {notes.logros.length} items
+                  <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-100">
+                    {activeNotes.logros.length} ítems
                   </span>
                 </div>
 
-                <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-                  <AnimatePresence initial={false}>
-                    {notes.logros.map(note => (
-                      <motion.div 
-                        key={note.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="group flex items-start gap-2 bg-slate-950/40 hover:bg-slate-950/70 border border-slate-850 p-2.5 rounded-xl transition-all"
-                      >
-                        <span className="text-emerald-400 font-bold shrink-0 mt-0.5 text-xs">✓</span>
-                        
-                        {isEditingNote === note.id ? (
-                          <div className="flex-1 flex gap-1">
-                            <input 
-                              type="text" 
-                              value={editNoteText} 
-                              onChange={(e) => setEditNoteText(e.target.value)}
-                              className="bg-slate-900 border border-slate-700 rounded px-2 py-0.5 text-xs text-slate-100 flex-1 focus:outline-none focus:border-orange-500"
-                              autoFocus
-                            />
-                            <button onClick={() => saveEdit('logros', note.id)} className="p-1 text-green-400 hover:bg-slate-850 rounded"><CheckCircle size={14} /></button>
-                            <button onClick={cancelEdit} className="p-1 text-red-400 hover:bg-slate-850 rounded"><AlertCircle size={14} /></button>
-                          </div>
-                        ) : (
-                          <>
-                            <span className="text-xs text-slate-300 flex-1 leading-relaxed cursor-pointer" onClick={() => startEditing(note)}>
-                              {note.text}
-                            </span>
-                            <button 
-                              onClick={() => deleteNote('logros', note.id)}
-                              className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-all p-1 self-center"
-                              title="Eliminar logro"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </>
-                        )}
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
+                <div className="space-y-1">
+                  {activeNotes.logros.map((text, idx) => (
+                    <div key={idx} className="op-list-item">
+                      <span className="text-emerald-500 op-bullet">✓</span>
+                      <span className="op-text">{text}</span>
+                    </div>
+                  ))}
                 </div>
-              </div>
-
-              {/* Add form */}
-              <div className="mt-4 pt-3 border-t border-slate-800/60 flex gap-2">
-                <input 
-                  type="text" 
-                  placeholder="Agregar logro..." 
-                  value={newNoteTexts.logros}
-                  onChange={(e) => setNewNoteTexts(prev => ({ ...prev, logros: e.target.value }))}
-                  onKeyDown={(e) => e.key === 'Enter' && addNote('logros')}
-                  className="bg-slate-950/60 border border-slate-850 rounded-xl px-3 py-2 text-xs text-slate-300 flex-1 focus:outline-none focus:border-orange-500/50"
-                />
-                <button 
-                  onClick={() => addNote('logros')}
-                  className="p-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white rounded-xl transition-all"
-                >
-                  <Plus size={16} />
-                </button>
               </div>
             </div>
 
             {/* Column 2: Accionables */}
-            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 backdrop-blur-md flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
-                  <h3 className="font-bold font-outfit text-slate-200 flex items-center gap-2 text-md">
-                    <span className="text-orange-400">⚡</span> Accionables Próxima Semana
+            <div className="corp-card">
+              <div className="w-full">
+                <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+                  <h3 className="font-bold font-outfit text-slate-700 flex items-center gap-1.5 text-sm">
+                    <span className="text-amber-500">⚡</span> Accionables Próxima Semana
                   </h3>
-                  <span className="text-xs font-mono bg-orange-500/10 border border-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full">
-                    {notes.accionables.filter(n => !n.completed).length} pendientes
+                  <span className="text-[10px] font-bold bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full border border-amber-100">
+                    {activeNotes.accionables.length} ítems
                   </span>
                 </div>
 
-                <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-                  <AnimatePresence initial={false}>
-                    {notes.accionables.map(note => (
-                      <motion.div 
-                        key={note.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className={`group flex items-start gap-2 bg-slate-950/40 hover:bg-slate-950/70 border border-slate-850 p-2.5 rounded-xl transition-all ${note.completed ? 'opacity-50' : ''}`}
-                      >
-                        <input 
-                          type="checkbox" 
-                          checked={note.completed} 
-                          onChange={() => toggleAccionable(note.id)}
-                          className="mt-0.5 rounded border-slate-700 bg-slate-900 text-orange-500 focus:ring-orange-500 focus:ring-offset-slate-900 cursor-pointer"
-                        />
-                        
-                        {isEditingNote === note.id ? (
-                          <div className="flex-1 flex gap-1">
-                            <input 
-                              type="text" 
-                              value={editNoteText} 
-                              onChange={(e) => setEditNoteText(e.target.value)}
-                              className="bg-slate-900 border border-slate-700 rounded px-2 py-0.5 text-xs text-slate-100 flex-1 focus:outline-none focus:border-orange-500"
-                              autoFocus
-                            />
-                            <button onClick={() => saveEdit('accionables', note.id)} className="p-1 text-green-400 hover:bg-slate-850 rounded"><CheckCircle size={14} /></button>
-                            <button onClick={cancelEdit} className="p-1 text-red-400 hover:bg-slate-850 rounded"><AlertCircle size={14} /></button>
-                          </div>
-                        ) : (
-                          <>
-                            <span 
-                              className={`text-xs text-slate-300 flex-1 leading-relaxed cursor-pointer ${note.completed ? 'line-through text-slate-500' : ''}`}
-                              onClick={() => startEditing(note)}
-                            >
-                              {note.text}
-                            </span>
-                            <button 
-                              onClick={() => deleteNote('accionables', note.id)}
-                              className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-all p-1 self-center"
-                              title="Eliminar tarea"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </>
-                        )}
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
+                <div className="space-y-1">
+                  {activeNotes.accionables.map((text, idx) => (
+                    <div key={idx} className="op-list-item">
+                      <span className="text-amber-500 op-bullet">▶</span>
+                      <span className="op-text">{text}</span>
+                    </div>
+                  ))}
                 </div>
-              </div>
-
-              {/* Add form */}
-              <div className="mt-4 pt-3 border-t border-slate-800/60 flex gap-2">
-                <input 
-                  type="text" 
-                  placeholder="Agregar accionable..." 
-                  value={newNoteTexts.accionables}
-                  onChange={(e) => setNewNoteTexts(prev => ({ ...prev, accionables: e.target.value }))}
-                  onKeyDown={(e) => e.key === 'Enter' && addNote('accionables')}
-                  className="bg-slate-950/60 border border-slate-850 rounded-xl px-3 py-2 text-xs text-slate-300 flex-1 focus:outline-none focus:border-orange-500/50"
-                />
-                <button 
-                  onClick={() => addNote('accionables')}
-                  className="p-2 bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white rounded-xl transition-all"
-                >
-                  <Plus size={16} />
-                </button>
               </div>
             </div>
 
             {/* Column 3: Dependencias */}
-            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 backdrop-blur-md flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
-                  <h3 className="font-bold font-outfit text-slate-200 flex items-center gap-2 text-md">
-                    <span className="text-sky-400">📌</span> Dependencias y Notas
+            <div className="corp-card">
+              <div className="w-full">
+                <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+                  <h3 className="font-bold font-outfit text-slate-700 flex items-center gap-1.5 text-sm">
+                    <span className="text-[#003366]">📌</span> Dependencias y Notas
                   </h3>
-                  <span className="text-xs font-mono bg-sky-500/10 border border-sky-500/20 text-sky-400 px-2 py-0.5 rounded-full">
-                    {notes.dependencias.length} items
+                  <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100">
+                    {activeNotes.dependencias.length} ítems
                   </span>
                 </div>
 
-                <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-                  <AnimatePresence initial={false}>
-                    {notes.dependencias.map(note => (
-                      <motion.div 
-                        key={note.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="group flex items-start gap-2 bg-slate-950/40 hover:bg-slate-950/70 border border-slate-855 p-2.5 rounded-xl transition-all"
-                      >
-                        <span className="text-sky-400 font-bold shrink-0 mt-0.5 text-xs">•</span>
-                        
-                        {isEditingNote === note.id ? (
-                          <div className="flex-1 flex gap-1">
-                            <input 
-                              type="text" 
-                              value={editNoteText} 
-                              onChange={(e) => setEditNoteText(e.target.value)}
-                              className="bg-slate-900 border border-slate-700 rounded px-2 py-0.5 text-xs text-slate-100 flex-1 focus:outline-none focus:border-orange-500"
-                              autoFocus
-                            />
-                            <button onClick={() => saveEdit('dependencias', note.id)} className="p-1 text-green-400 hover:bg-slate-850 rounded"><CheckCircle size={14} /></button>
-                            <button onClick={cancelEdit} className="p-1 text-red-400 hover:bg-slate-850 rounded"><AlertCircle size={14} /></button>
-                          </div>
-                        ) : (
-                          <>
-                            <span className="text-xs text-slate-300 flex-1 leading-relaxed cursor-pointer" onClick={() => startEditing(note)}>
-                              {note.text}
-                            </span>
-                            <button 
-                              onClick={() => deleteNote('dependencias', note.id)}
-                              className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-all p-1 self-center"
-                              title="Eliminar dependencia"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </>
-                        )}
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
+                <div className="space-y-1">
+                  {activeNotes.dependencias.map((text, idx) => (
+                    <div key={idx} className="op-list-item">
+                      <span className="text-[#003366] op-bullet">•</span>
+                      <span className="op-text">{text}</span>
+                    </div>
+                  ))}
                 </div>
-              </div>
-
-              {/* Add form */}
-              <div className="mt-4 pt-3 border-t border-slate-800/60 flex gap-2">
-                <input 
-                  type="text" 
-                  placeholder="Agregar dependencia..." 
-                  value={newNoteTexts.dependencias}
-                  onChange={(e) => setNewNoteTexts(prev => ({ ...prev, dependencias: e.target.value }))}
-                  onKeyDown={(e) => e.key === 'Enter' && addNote('dependencias')}
-                  className="bg-slate-950/60 border border-slate-855 rounded-xl px-3 py-2 text-xs text-slate-300 flex-1 focus:outline-none focus:border-orange-500/50"
-                />
-                <button 
-                  onClick={() => addNote('dependencias')}
-                  className="p-2 bg-sky-500/10 border border-sky-500/20 text-sky-400 hover:bg-sky-500 hover:text-white rounded-xl transition-all"
-                >
-                  <Plus size={16} />
-                </button>
               </div>
             </div>
 
@@ -896,14 +654,14 @@ function App() {
         </section>
 
         {/* Footer */}
-        <footer className="mt-16 border-t border-slate-800/80 pt-8 text-center text-slate-550 text-xs">
-          <p className="flex items-center justify-center gap-1.5">
-            <span>Quadratín Morelos Social OKR Dashboard</span>
+        <footer className="mt-16 border-t border-slate-200 pt-8 text-center text-slate-400 text-xs">
+          <p className="flex items-center justify-center gap-1.5 font-medium">
+            <span>Quadratín Morelos · Dashboard Ejecutivo Q2</span>
             <span>•</span>
-            <span className="text-slate-500">Construido con React, Vite y Framer Motion</span>
+            <span>Estadísticas en Tiempo Real</span>
           </p>
-          <p className="mt-1 text-slate-600">
-            Diseño Premium adaptado en colores Azul y Naranja de la identidad visual de Quadratín.
+          <p className="mt-1">
+            Diseño corporativo oficial basado en la identidad visual de Quadratín (Naranja y Azul).
           </p>
         </footer>
 
