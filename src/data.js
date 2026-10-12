@@ -1238,6 +1238,16 @@ export const qm_data = {
       "tiktok": 9408,
       "facebook": 80835,
       "twitter": 10665
+    },
+    {
+      "date": "2026-10-12",
+      "instagram": 42002,
+      "tiktok": 9423,
+      "facebook": 80835,
+      "twitter": 10663,
+      "failed_scrapes": [
+        "facebook"
+      ]
     }
   ],
   "goals": {
