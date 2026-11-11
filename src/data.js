@@ -1517,6 +1517,16 @@ export const qm_data = {
       "failed_scrapes": [
         "facebook"
       ]
+    },
+    {
+      "date": "2026-11-11",
+      "instagram": 43629,
+      "tiktok": 10059,
+      "facebook": 80835,
+      "twitter": 10669,
+      "failed_scrapes": [
+        "facebook"
+      ]
     }
   ],
   "goals": {
